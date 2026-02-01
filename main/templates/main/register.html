@@ -1,0 +1,31 @@
+<!-- templates/main/register.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Регистрация – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="text-center">Создать аккаунт</h3>
+      </div>
+      <div class="card-body">
+        <form method="post" role="form" aria-label="Форма регистрации">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+        </form>
+        <div class="text-center mt-3">
+          <small>
+            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+          </small>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

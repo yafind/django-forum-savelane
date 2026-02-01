@@ -1,0 +1,154 @@
+{% extends 'main/base.html' %}
+{% block title %}Форум – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row g-4 align-items-start">
+  <!-- Боковая панель: разделы и подразделы -->
+  <div class="col-lg-3">
+    <aside>
+      <div class="card h-100 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Разделы</h5>
+          <small class="text-muted">Навигация</small>
+        </div>
+        <div class="card-body p-2">
+          <nav class="list-group list-group-flush overflow-auto" style="max-height:420px;" aria-label="Forum sections">
+          {% comment %}View should prefetch `subsections` to avoid N+1 queries: `.prefetch_related('subsections')`{% endcomment %}
+          {% for section in sections %}
+            <div class="list-group-item bg-light fw-semibold text-dark">
+              <span class="section-title">{{ section.title }}</span>
+            </div>
+            <ul class="list-group list-group-flush" aria-label="{{ section.title }} subsections">
+              {% for subsection in section.subsections.all %}
+                <li class="list-group-item py-2">
+                  <a href="{% url 'thread_list' subsection.pk %}" class="d-flex align-items-center text-decoration-none">
+                    <i class="fas fa-comments me-2 text-muted" aria-hidden="true"></i>
+                    <span class="flex-grow-1 text-truncate">{{ subsection.title }}</span>
+                    <i class="fas fa-chevron-right ms-2 text-muted small" aria-hidden="true"></i>
+                  </a>
+                </li>
+              {% empty %}
+                <li class="list-group-item py-2 text-muted">Нет подразделов</li>
+              {% endfor %}
+            </ul>
+          {% endfor %}
+          </nav>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="col-lg-9">
+
+    <!-- 🔖 Закреплённые темы -->
+    {% if pinned_threads %}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-warning bg-opacity-10 border-warning border-start d-flex align-items-center">
+          <h2 class="h5 mb-0 text-dark me-2">
+            <i class="fas fa-thumbtack me-2" aria-hidden="true"></i>
+            <span>Закреплённые темы</span>
+          </h2>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for thread in pinned_threads %}
+            <a href="{% url 'post_list' thread.id %}" class="list-group-item list-group-item-action py-3">
+              <div class="d-flex flex-column flex-md-row justify-content-between">
+                <div class="mb-1 mb-md-0">
+                  <strong class="d-block text-truncate">
+                    <span class="badge bg-warning text-dark me-2">PIN</span>{{ thread.title }}
+                  </strong>
+                  <small class="text-muted d-block">
+                    <i class="fas fa-folder-open me-1" aria-hidden="true"></i>
+                    {{ thread.subsection.section.title }} → {{ thread.subsection.title }}
+                  </small>
+                </div>
+                <div class="text-end text-md-start">
+                  <small class="text-muted">
+                    <time datetime="{{ thread.last_reply_at|date:'c' }}">{{ thread.last_reply_at|date:"d M Y H:i" }}</time>
+                  </small>
+                </div>
+              </div>
+            </a>
+          {% empty %}
+            <div class="list-group-item py-3 text-muted">Нет закреплённых тем</div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Последние темы -->
+    <div class="card mb-5 shadow-sm">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Последние темы</h2>
+        <div class="d-flex align-items-center gap-2">
+          <small class="text-muted">Актуальные обсуждения</small>
+          <a href="{% url 'choose_subsection' %}" class="btn btn-sm btn-primary d-inline-flex align-items-center" aria-label="Создать тему">
+            <i class="fas fa-plus-circle me-1" aria-hidden="true"></i> Создать тему
+          </a>
+        </div>
+      </div>
+      <div class="list-group list-group-flush">
+        {% if latest_threads %}
+          {% for thread in latest_threads %}
+            <a href="{% url 'post_list' thread.id %}" class="list-group-item list-group-item-action py-3">
+              <div class="d-flex flex-column flex-md-row justify-content-between">
+                <div class="mb-2 mb-md-0">
+                  <strong class="d-block text-truncate">{{ thread.title }}</strong>
+                  <small class="text-muted d-block">
+                    <i class="fas fa-folder me-1" aria-hidden="true"></i>
+                    {{ thread.subsection.section.title }} → {{ thread.subsection.title }}
+                  </small>
+                </div>
+                <div class="text-end text-md-start text-nowrap">
+                  <small class="text-muted d-block">
+                    <time datetime="{{ thread.created_at|date:'c' }}">{{ thread.created_at|date:"d.m.Y H:i" }}</time>
+                  </small>
+                  <small class="text-muted">
+                    <i class="fas fa-user me-1" aria-hidden="true"></i>{{ thread.author.username }}
+                  </small>
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <div class="list-group-item py-4 text-center text-muted">
+            <i class="fas fa-inbox me-2" aria-hidden="true"></i>Нет тем
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="card">
+      <div class="card-header bg-light">
+        <h2 class="h5 mb-0">Статистика форума</h2>
+      </div>
+      <div class="card-body">
+        <div class="row text-center g-3">
+          <div class="col">
+              <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+              <i class="fas fa-users text-primary fs-4" aria-hidden="true"></i>
+            </div>
+            <h4 class="mb-0">{{ stats.users }}</h4>
+            <small class="text-muted">Пользователей</small>
+          </div>
+          <div class="col">
+              <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+              <i class="fas fa-comment-alt text-success fs-4" aria-hidden="true"></i>
+            </div>
+            <h4 class="mb-0">{{ stats.threads }}</h4>
+            <small class="text-muted">Тем</small>
+          </div>
+          <div class="col">
+              <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+              <i class="fas fa-envelope-open-text text-info fs-4" aria-hidden="true"></i>
+            </div>
+            <h4 class="mb-0">{{ stats.posts }}</h4>
+            <small class="text-muted">Сообщений</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

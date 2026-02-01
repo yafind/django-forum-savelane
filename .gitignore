@@ -1,0 +1,38 @@
+# Secrets
+.env
+*.key
+secrets.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+myenv/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+*.log
+logs/
+media/
+staticfiles/
+db.sqlite3
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+

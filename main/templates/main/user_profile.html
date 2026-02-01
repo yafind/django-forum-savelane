@@ -1,0 +1,77 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Заголовок профиля -->
+  <div class="text-center mb-5">
+    <h1 class="display-5 fw-bold">{{ profile_user.username }}</h1>
+    <p class="text-muted mb-0">
+      <small>Участник с {{ profile_user.date_joined|date:"d.m.Y" }}</small>
+    </p>
+  </div>
+
+  <!-- Аватар -->
+      <div class="text-center mb-5">
+    {% with avatar_url=profile_user.profile.avatar.url|default:"" %}
+      <div class="d-inline-block p-2 bg-light rounded-circle">
+        <img 
+          src="{% if avatar_url %}{{ avatar_url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+          alt="Аватар {{ profile_user.username }}"
+          class="rounded-circle border border-3 border-white shadow-sm"
+          width="140"
+          height="140"
+          loading="lazy"
+          onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
+        >
+      </div>
+    {% endwith %}
+  </div>
+
+  <!-- Статистика -->
+  <div class="row justify-content-center g-4 mb-5">
+    <div class="col-md-5">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+          <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+            <span class="fs-3 fw-bold text-primary">{{ post_count }}</span>
+          </div>
+          <h5 class="card-title mb-0">Сообщений</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center py-4">
+          <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+            <span class="fs-3 fw-bold text-success">{{ thread_count }}</span>
+          </div>
+          <h5 class="card-title mb-0">Тем создано</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Действия -->
+  <div class="text-center">
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <a href="{% url 'update_avatar' %}" class="btn btn-outline-primary btn-sm px-3" aria-label="Изменить аватар">
+        <i class="fas fa-camera me-1" aria-hidden="true"></i> Изменить аватар
+      </a>
+      <a href="{% url 'section_list' %}" class="btn btn-outline-secondary btn-sm px-3" aria-label="На главную">
+        <i class="fas fa-arrow-left me-1" aria-hidden="true"></i> На главную
+      </a>
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+        <i class="fas fa-sign-out-alt me-1" aria-hidden="true"></i> Выйти
+        </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'main/base.html' %}
+{% block title %}Редактировать сообщение – {{ block.super }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h1 class="h5">Редактировать сообщение</h1>
+
+    <form method="post" role="form" aria-label="Форма редактирования сообщения">
+    {% csrf_token %}
+    <div class="mb-3">
+        <textarea name="text" class="form-control" rows="6" required>{{ post.text }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{% url 'post_list' post.thread.id %}" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
+{% endblock %}

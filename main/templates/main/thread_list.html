@@ -1,0 +1,46 @@
+<!-- main/templates/main/thread_list.html -->
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    {# Prefetch note: in view use `.prefetch_related('subsections')` to avoid N+1 queries #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-truncate">{{ subsection.title }}</h2>
+    <a href="{% url 'new_thread' subsection.id %}" class="btn btn-sm btn-primary" aria-label="Создать новую тему">Новая тема</a>
+</div>
+<p class="text-muted">{{ subsection.description }}</p>
+
+<!-- 🔁 Переключатель сортировки -->
+<div class="btn-group mb-3" role="group" aria-label="Сортировка тем">
+    <a class="btn btn-outline-secondary {% if current_order == 'latest' %}active{% endif %}"
+       href="?order=latest">
+        Новые темы
+    </a>
+    <a class="btn btn-outline-secondary {% if current_order == 'active' %}active{% endif %}"
+       href="?order=active">
+        По последнему ответу
+    </a>
+</div>
+
+{% if threads %}
+    <div class="list-group">
+        {% for thread in threads %}
+            <a href="{% url 'post_list' thread.id %}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between">
+                    <strong class="text-truncate">{{ thread.title }}</strong>
+                    <small class="text-muted"><time datetime="{{ thread.last_reply_at|date:'c' }}">{{ thread.last_reply_at|date:"d M Y H:i" }}</time></small>
+                </div>
+                <small class="text-muted">
+                    <span>Автор: {{ thread.author.username }}</span>
+                    <span class="mx-2">•</span>
+                    <span>Ответов: {{ thread.posts.count }}</span>
+                </small>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>В этом подразделе ещё нет тем. <a href="{% url 'new_thread' subsection.id %}">Создать первую?</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+<!-- main/templates/main/update_avatar.html -->
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Изменить аватар – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+  <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0">Изменить аватар</h5>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" role="form" aria-label="Форма изменения аватара">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Текущий аватар</label><br>
+            <img 
+              src="{{ user.profile.avatar.url }}" 
+              alt="Ваш аватар"
+              class="rounded-circle mb-3"
+              width="100"
+              height="100"
+              loading="lazy"
+            >
+          </div>
+          <div class="mb-3">
+            <label for="id_avatar" class="form-label">Новый аватар (PNG или JPG)</label>
+            {{ form.avatar }}
+            {% if form.avatar.errors %}
+              <div class="text-danger">{{ form.avatar.errors }}</div>
+            {% endif %}
+            <div class="form-text">Макс. размер — 2 МБ. Поддерживаются PNG и JPG.</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+          <a href="{% url 'user_profile' user.id %}" class="btn btn-secondary">Отмена</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
