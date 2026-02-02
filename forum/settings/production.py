@@ -3,17 +3,14 @@ import logging
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-from .base import *
-
-# Загружаем переменные из .env файла
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env_path = BASE_DIR / '.env'
 
 if env_path.exists():
+    from dotenv import load_dotenv
     load_dotenv(env_path)
-
+    
+from .base import *
 
 DEBUG = False
 
