@@ -266,3 +266,31 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message {self.id}"
+
+
+class TypingStatus(models.Model):
+    """Кратковременный индикатор набора текста в диалоге."""
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name='typing_statuses',
+        verbose_name="Диалог"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='typing_statuses',
+        verbose_name="Пользователь"
+    )
+    updated_at = models.DateTimeField(default=timezone.now, verbose_name="Время набора")
+
+    class Meta:
+        verbose_name = 'Статус набора'
+        verbose_name_plural = 'Статусы набора'
+        unique_together = ('conversation', 'user')
+        indexes = [
+            models.Index(fields=['conversation', 'updated_at']),
+        ]
+
+    def __str__(self):
+        return f"Typing {self.user_id} in {self.conversation_id}"

@@ -4,55 +4,478 @@
 {% block title %}Диалог с {{ other_user.username }} – {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center gap-3">
-      <img
-        src="{{ other_user.profile.avatar_url }}"
-        alt="Аватар {{ other_user.username }}"
-        class="rounded-circle border"
-        width="48"
-        height="48"
-        loading="lazy"
-        onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
-      >
-      <div>
-        <div class="h5 mb-0">{{ other_user.username }}</div>
-        <a href="{% url 'user_profile' other_user.id %}" class="text-muted small">Профиль пользователя</a>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
+
+  .tg-chat {
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #eaf2ff 0%, #f7f9fc 40%, #e9f7f1 100%);
+    min-height: calc(100vh - 64px);
+    padding: 20px 0 40px;
+  }
+
+  .tg-chat-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(35, 45, 80, 0.12);
+    border: 1px solid rgba(60, 80, 120, 0.08);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    min-height: 72vh;
+  }
+
+  .tg-sidebar {
+    background: #f8f9fc;
+    border-right: 1px solid rgba(60, 80, 120, 0.08);
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tg-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1f2a44;
+  }
+
+  .tg-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid rgba(40, 60, 100, 0.12);
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 2px rgba(20, 30, 50, 0.05);
+  }
+
+  .tg-search input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    background: transparent;
+  }
+
+  .tg-list {
+    display: grid;
+    gap: 10px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .tg-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(60, 80, 120, 0.08);
+    background: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .tg-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(40, 60, 100, 0.12);
+  }
+
+  .tg-item.is-active {
+    border-color: rgba(43, 110, 246, 0.45);
+    box-shadow: 0 12px 20px rgba(43, 110, 246, 0.15);
+    background: linear-gradient(135deg, rgba(43, 110, 246, 0.08), rgba(79, 140, 255, 0.05));
+  }
+
+  .tg-item-name {
+    font-weight: 700;
+    color: #1f2a44;
+  }
+
+  .tg-item-meta {
+    font-size: 0.78rem;
+    color: #7a879b;
+  }
+
+  .tg-item-text {
+    font-size: 0.88rem;
+    color: #4f5d75;
+  }
+
+  .tg-badge {
+    background: #2b6ef6;
+    color: #ffffff;
+    font-size: 0.75rem;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+  }
+
+  .tg-chat-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tg-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(60, 80, 120, 0.08);
+  }
+
+  .tg-chat-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tg-chat-title h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1f2a44;
+  }
+
+  .tg-chat-body {
+    padding: 22px 20px;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(44, 110, 246, 0.08), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(46, 196, 182, 0.1), transparent 40%);
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .tg-message {
+    display: flex;
+    margin-bottom: 14px;
+  }
+
+  .tg-message.is-me {
+    justify-content: flex-end;
+  }
+
+  .tg-bubble {
+    max-width: 70%;
+    padding: 12px 14px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(20, 30, 60, 0.08);
+    position: relative;
+  }
+
+  .tg-bubble.is-me {
+    background: linear-gradient(135deg, #2b6ef6, #4f8cff);
+    color: #ffffff;
+    border-top-right-radius: 6px;
+  }
+
+  .tg-bubble.is-them {
+    background: #ffffff;
+    border: 1px solid rgba(60, 80, 120, 0.12);
+    color: #1f2a44;
+    border-top-left-radius: 6px;
+  }
+
+  .tg-meta {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .tg-meta.is-them {
+    color: #7a879b;
+  }
+
+  .tg-typing {
+    font-size: 0.8rem;
+    color: #5a6b84;
+  }
+
+  .tg-composer {
+    padding: 16px 20px 20px;
+    border-top: 1px solid rgba(60, 80, 120, 0.08);
+    background: #f8f9fc;
+  }
+
+  .tg-input {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .tg-input textarea {
+    resize: none;
+    border-radius: 14px;
+    border: 1px solid rgba(60, 80, 120, 0.15);
+    padding: 12px 14px;
+  }
+
+  .tg-send {
+    background: #2b6ef6;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 992px) {
+    .tg-chat-shell {
+      grid-template-columns: 1fr;
+      border-radius: 0;
+      min-height: calc(100vh - 64px);
+    }
+
+    .tg-sidebar {
+      border-right: none;
+      border-bottom: 1px solid rgba(60, 80, 120, 0.08);
+    }
+
+    .tg-bubble {
+      max-width: 85%;
+    }
+  }
+</style>
+
+<div class="tg-chat">
+  <div class="tg-chat-shell">
+    <aside class="tg-sidebar">
+      <h2 class="tg-title">Сообщения</h2>
+      <div class="tg-search">
+        <i class="fas fa-search text-muted" aria-hidden="true"></i>
+        <input type="text" placeholder="Поиск по диалогам" aria-label="Поиск по диалогам">
       </div>
-    </div>
-    <a href="{% url 'messages_list' %}" class="btn btn-outline-secondary btn-sm">Назад</a>
-  </div>
 
-  <div class="card">
-    <div class="card-body" style="max-height: 60vh; overflow-y: auto;">
-      {% if message_list %}
-        {% for msg in message_list %}
-          <div class="d-flex mb-3 {% if msg.sender_id == user.id %}justify-content-end{% endif %}">
-            <div class="p-3 rounded-3 {% if msg.sender_id == user.id %}bg-primary text-white{% else %}bg-light border{% endif %}" style="max-width: 75%;">
-              <div class="small mb-1 {% if msg.sender_id == user.id %}text-white-50{% else %}text-muted{% endif %}">
-                {{ msg.sender.username }} • {{ msg.created_at|date:"d.m.Y H:i" }}
+      {% if conversation_items %}
+        <div class="tg-list" data-conversation-list>
+          {% for item in conversation_items %}
+            <a href="{% url 'message_detail' item.conversation.id %}" class="tg-item text-reset {% if item.conversation.id == conversation.id %}is-active{% endif %}">
+              <img
+                src="{{ item.other_user.profile.avatar_url }}"
+                alt="Аватар {{ item.other_user.username }}"
+                class="rounded-circle border"
+                width="46"
+                height="46"
+                loading="lazy"
+                onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
+              >
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="tg-item-name">{{ item.other_user.username }}</div>
+                  {% if item.last_message %}
+                    <div class="tg-item-meta">{{ item.last_message.created_at|date:"d.m.Y H:i" }}</div>
+                  {% endif %}
+                </div>
+                {% if item.last_message %}
+                  <div class="tg-item-text text-truncate">
+                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body }}{% endif %}
+                  </div>
+                {% else %}
+                  <div class="tg-item-text">{% if item.is_typing %}печатает…{% else %}Нет сообщений{% endif %}</div>
+                {% endif %}
               </div>
-              <div style="white-space: pre-wrap;">{{ msg.body }}</div>
-            </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="text-muted">Сообщений нет. Напишите первым.</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card mt-3">
-    <div class="card-body">
-      <form method="post" aria-label="Форма личного сообщения">
-        {% csrf_token %}
-        <div class="mb-3">
-          <textarea name="body" class="form-control" rows="3" placeholder="Напишите сообщение..." required></textarea>
+              {% if item.unread_count %}
+                <span class="tg-badge">{{ item.unread_count }}</span>
+              {% endif %}
+            </a>
+          {% endfor %}
         </div>
-        <button type="submit" class="btn btn-primary">Отправить</button>
-      </form>
-    </div>
+      {% else %}
+        <div class="text-muted">Пока нет диалогов.</div>
+      {% endif %}
+    </aside>
+
+    <section class="tg-chat-panel">
+      <div class="tg-chat-header">
+        <div class="tg-chat-title">
+          <img
+            src="{{ other_user.profile.avatar_url }}"
+            alt="Аватар {{ other_user.username }}"
+            class="rounded-circle border"
+            width="44"
+            height="44"
+            loading="lazy"
+            onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
+          >
+          <div>
+            <h1>{{ other_user.username }}</h1>
+            <div class="tg-typing" id="typing-indicator">{% if typing_active %}печатает…{% endif %}</div>
+            <a href="{% url 'user_profile' other_user.id %}" class="text-muted small">Профиль пользователя</a>
+          </div>
+        </div>
+        <a href="{% url 'messages_list' %}" class="btn btn-outline-secondary btn-sm">Назад</a>
+      </div>
+
+      <div class="tg-chat-body" data-message-list>
+        {% if message_list %}
+          {% for msg in message_list %}
+            <div class="tg-message {% if msg.sender_id == user.id %}is-me{% endif %}" data-message-id="{{ msg.id }}">
+              <div class="tg-bubble {% if msg.sender_id == user.id %}is-me{% else %}is-them{% endif %}">
+                <div class="tg-meta {% if msg.sender_id == user.id %}{% else %}is-them{% endif %}">
+                  {{ msg.sender.username }} • {{ msg.created_at|date:"d.m.Y H:i" }}
+                </div>
+                <div style="white-space: pre-wrap;">{{ msg.body }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted">Сообщений нет. Напишите первым.</div>
+        {% endif %}
+      </div>
+
+      <div class="tg-composer">
+        <form method="post" aria-label="Форма личного сообщения">
+          {% csrf_token %}
+          <div class="tg-input">
+            <textarea name="body" class="form-control" rows="2" placeholder="Напишите сообщение..." required></textarea>
+            <button type="submit" class="tg-send">Отправить</button>
+          </div>
+        </form>
+      </div>
+    </section>
   </div>
 </div>
+
+<script>
+  const convoList = document.querySelector('[data-conversation-list]');
+  const messageList = document.querySelector('[data-message-list]');
+  const typingIndicator = document.getElementById('typing-indicator');
+  const conversationId = {{ conversation.id }};
+
+  function getCsrfToken() {
+    const value = `; ${document.cookie}`;
+    const parts = value.split('; csrftoken=');
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
+  function renderConversations(items) {
+    if (!convoList) return;
+    convoList.innerHTML = '';
+    items.forEach((item) => {
+      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body || 'Нет сообщений');
+      const timeText = item.last_message.created_at
+        ? new Date(item.last_message.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
+      const isActive = item.conversation_id === conversationId;
+
+      const link = document.createElement('a');
+      link.href = `/messages/${item.conversation_id}/`;
+      link.className = `tg-item text-reset ${isActive ? 'is-active' : ''}`;
+      link.innerHTML = `
+        <img
+          src="${item.other_user.avatar_url}"
+          alt="Аватар ${item.other_user.username}"
+          class="rounded-circle border"
+          width="46"
+          height="46"
+          loading="lazy"
+          onerror="this.onerror=null; this.src='/static/images/default-avatar.png';"
+        >
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="tg-item-name">${item.other_user.username}</div>
+            <div class="tg-item-meta">${timeText}</div>
+          </div>
+          <div class="tg-item-text text-truncate">${typingText}</div>
+        </div>
+        ${item.unread_count ? `<span class="tg-badge">${item.unread_count}</span>` : ''}
+      `;
+      convoList.appendChild(link);
+    });
+  }
+
+  function appendMessage(msg) {
+    const wrapper = document.createElement('div');
+    wrapper.className = `tg-message ${msg.sender_id === {{ user.id }} ? 'is-me' : ''}`;
+    wrapper.dataset.messageId = msg.id;
+
+    const bubble = document.createElement('div');
+    bubble.className = `tg-bubble ${msg.sender_id === {{ user.id }} ? 'is-me' : 'is-them'}`;
+
+    const meta = document.createElement('div');
+    meta.className = `tg-meta ${msg.sender_id === {{ user.id }} ? '' : 'is-them'}`;
+    meta.textContent = `${msg.sender_name} • ${new Date(msg.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+
+    const body = document.createElement('div');
+    body.style.whiteSpace = 'pre-wrap';
+    body.textContent = msg.body;
+
+    bubble.appendChild(meta);
+    bubble.appendChild(body);
+    wrapper.appendChild(bubble);
+    messageList.appendChild(wrapper);
+  }
+
+  function getLastMessageId() {
+    const messages = messageList.querySelectorAll('[data-message-id]');
+    if (!messages.length) return 0;
+    return parseInt(messages[messages.length - 1].dataset.messageId, 10);
+  }
+
+  async function pollConversationList() {
+    try {
+      const response = await fetch('{% url "messages_poll" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) return;
+      const data = await response.json();
+      renderConversations(data.items || []);
+    } catch (err) {
+      return;
+    }
+  }
+
+  async function pollMessages() {
+    const lastId = getLastMessageId();
+    try {
+      const response = await fetch(`/messages/${conversationId}/poll/?after=${lastId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) return;
+      const data = await response.json();
+      (data.messages || []).forEach(appendMessage);
+      if (typeof data.typing_active !== 'undefined' && typingIndicator) {
+        typingIndicator.textContent = data.typing_active ? 'печатает…' : '';
+      }
+      if (data.messages && data.messages.length) {
+        messageList.scrollTop = messageList.scrollHeight;
+      }
+    } catch (err) {
+      return;
+    }
+  }
+
+  async function sendTypingPing() {
+    try {
+      await fetch(`/messages/${conversationId}/typing/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+    } catch (err) {
+      return;
+    }
+  }
+
+  let typingTimeout = null;
+  const textarea = document.querySelector('textarea[name="body"]');
+  if (textarea) {
+    textarea.addEventListener('input', () => {
+      if (typingTimeout) return;
+      typingTimeout = setTimeout(() => { typingTimeout = null; }, 1500);
+      sendTypingPing();
+    });
+  }
+
+  setInterval(pollConversationList, 12000);
+  setInterval(pollMessages, 3000);
+</script>
 {% endblock %}

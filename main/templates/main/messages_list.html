@@ -4,45 +4,219 @@
 {% block title %}Личные сообщения – {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Личные сообщения</h1>
-  </div>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
 
-  {% if conversation_items %}
-    <div class="list-group">
-      {% for item in conversation_items %}
-        <a href="{% url 'message_detail' item.conversation.id %}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
-          <img
-            src="{{ item.other_user.profile.avatar_url }}"
-            alt="Аватар {{ item.other_user.username }}"
-            class="rounded-circle border"
-            width="44"
-            height="44"
-            loading="lazy"
-            onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
-          >
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="fw-semibold">{{ item.other_user.username }}</div>
-              {% if item.last_message %}
-                <div class="text-muted small">{{ item.last_message.created_at|date:"d.m.Y H:i" }}</div>
+  .tg-page {
+    font-family: "Manrope", "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #f0f4ff 0%, #f7f9fc 45%, #eef7f3 100%);
+    min-height: calc(100vh - 64px);
+    padding: 24px 0 48px;
+  }
+
+  .tg-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 18px 40px rgba(35, 45, 80, 0.12);
+    overflow: hidden;
+    border: 1px solid rgba(60, 80, 120, 0.08);
+  }
+
+  .tg-sidebar {
+    padding: 20px 18px;
+    background: #f8f9fc;
+  }
+
+  .tg-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    color: #1f2a44;
+  }
+
+  .tg-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid rgba(40, 60, 100, 0.12);
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: inset 0 1px 2px rgba(20, 30, 50, 0.05);
+  }
+
+  .tg-search input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    background: transparent;
+  }
+
+  .tg-list {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+  }
+
+  .tg-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(60, 80, 120, 0.08);
+    background: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .tg-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(40, 60, 100, 0.12);
+  }
+
+  .tg-item-name {
+    font-weight: 700;
+    color: #1f2a44;
+  }
+
+  .tg-item-meta {
+    font-size: 0.78rem;
+    color: #7a879b;
+  }
+
+  .tg-item-text {
+    font-size: 0.9rem;
+    color: #4f5d75;
+  }
+
+  .tg-badge {
+    background: #2b6ef6;
+    color: #ffffff;
+    font-size: 0.75rem;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+  }
+
+  .tg-empty {
+    padding: 32px;
+    text-align: center;
+    color: #7a879b;
+  }
+
+  @media (max-width: 768px) {
+    .tg-shell {
+      border-radius: 0;
+    }
+  }
+</style>
+
+<div class="tg-page">
+  <div class="tg-shell">
+    <div class="tg-sidebar">
+      <h1 class="tg-title">Личные сообщения</h1>
+      <div class="tg-search">
+        <i class="fas fa-search text-muted" aria-hidden="true"></i>
+        <input type="text" placeholder="Поиск по диалогам" aria-label="Поиск по диалогам">
+      </div>
+
+      {% if conversation_items %}
+        <div class="tg-list" data-conversation-list>
+          {% for item in conversation_items %}
+            <a href="{% url 'message_detail' item.conversation.id %}" class="tg-item text-reset">
+              <img
+                src="{{ item.other_user.profile.avatar_url }}"
+                alt="Аватар {{ item.other_user.username }}"
+                class="rounded-circle border"
+                width="52"
+                height="52"
+                loading="lazy"
+                onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
+              >
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="tg-item-name">{{ item.other_user.username }}</div>
+                  {% if item.last_message %}
+                    <div class="tg-item-meta">{{ item.last_message.created_at|date:"d.m.Y H:i" }}</div>
+                  {% endif %}
+                </div>
+                {% if item.last_message %}
+                  <div class="tg-item-text text-truncate">
+                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body }}{% endif %}
+                  </div>
+                {% else %}
+                  <div class="tg-item-text">{% if item.is_typing %}печатает…{% else %}Нет сообщений{% endif %}</div>
+                {% endif %}
+              </div>
+              {% if item.unread_count %}
+                <span class="tg-badge">{{ item.unread_count }}</span>
               {% endif %}
-            </div>
-            {% if item.last_message %}
-              <div class="text-muted small text-truncate">{{ item.last_message.body }}</div>
-            {% else %}
-              <div class="text-muted small">Нет сообщений</div>
-            {% endif %}
-          </div>
-          {% if item.unread_count %}
-            <span class="badge bg-primary rounded-pill">{{ item.unread_count }}</span>
-          {% endif %}
-        </a>
-      {% endfor %}
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="tg-empty">Пока нет диалогов.</div>
+      {% endif %}
     </div>
-  {% else %}
-    <div class="alert alert-light border">Пока нет диалогов.</div>
-  {% endif %}
+  </div>
 </div>
+
+<script>
+  const conversationList = document.querySelector('[data-conversation-list]');
+
+  function renderConversations(items) {
+    if (!conversationList) return;
+    conversationList.innerHTML = '';
+    items.forEach((item) => {
+      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body || 'Нет сообщений');
+      const timeText = item.last_message.created_at
+        ? new Date(item.last_message.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : '';
+
+      const link = document.createElement('a');
+      link.href = `/messages/${item.conversation_id}/`;
+      link.className = 'tg-item text-reset';
+      link.innerHTML = `
+        <img
+          src="${item.other_user.avatar_url}"
+          alt="Аватар ${item.other_user.username}"
+          class="rounded-circle border"
+          width="52"
+          height="52"
+          loading="lazy"
+          onerror="this.onerror=null; this.src='/static/images/default-avatar.png';"
+        >
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="tg-item-name">${item.other_user.username}</div>
+            <div class="tg-item-meta">${timeText}</div>
+          </div>
+          <div class="tg-item-text text-truncate">${typingText}</div>
+        </div>
+        ${item.unread_count ? `<span class="tg-badge">${item.unread_count}</span>` : ''}
+      `;
+      conversationList.appendChild(link);
+    });
+  }
+
+  async function pollConversations() {
+    try {
+      const response = await fetch('{% url "messages_poll" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!response.ok) return;
+      const data = await response.json();
+      renderConversations(data.items || []);
+    } catch (err) {
+      return;
+    }
+  }
+
+  setInterval(pollConversations, 12000);
+</script>
 {% endblock %}

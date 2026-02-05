@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 import logging
 
-from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message
+from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message, TypingStatus
 from .forms import ThreadForm, AvatarForm, UserRegisterForm
 
 logger = logging.getLogger(__name__)
@@ -477,32 +478,7 @@ def choose_subsection(request):
 
 @login_required
 def messages_list(request):
-    last_message_subquery = Message.objects.filter(
-        conversation=OuterRef('pk')
-    ).order_by('-created_at')
-
-    conversations = Conversation.objects.filter(participants=request.user).annotate(
-        unread_count=Count(
-            'messages',
-            filter=Q(messages__recipient=request.user, messages__is_read=False),
-            distinct=True
-        ),
-        last_message_id=Subquery(last_message_subquery.values('id')[:1])
-    ).prefetch_related('participants')
-
-    last_message_ids = [c.last_message_id for c in conversations if c.last_message_id]
-    last_messages = Message.objects.filter(id__in=last_message_ids).select_related('sender', 'recipient')
-    last_message_map = {m.id: m for m in last_messages}
-
-    conversation_items = []
-    for conversation in conversations:
-        other_user = conversation.participants.exclude(id=request.user.id).first()
-        conversation_items.append({
-            'conversation': conversation,
-            'other_user': other_user,
-            'last_message': last_message_map.get(conversation.last_message_id),
-            'unread_count': conversation.unread_count,
-        })
+    conversation_items = _get_conversation_items(request.user)
 
     return render(request, 'main/messages_list.html', {
         'conversation_items': conversation_items,
@@ -540,10 +516,22 @@ def message_detail(request, conversation_id):
     ).update(is_read=True, read_at=timezone.now())
 
     message_list = conversation.messages.select_related('sender').all()
+
+    conversation_items = _get_conversation_items(request.user)
+
+    typing_cutoff = timezone.now() - timezone.timedelta(seconds=7)
+    typing_active = TypingStatus.objects.filter(
+        conversation=conversation,
+        user=other_user,
+        updated_at__gte=typing_cutoff
+    ).exists()
+
     return render(request, 'main/message_detail.html', {
         'conversation': conversation,
         'other_user': other_user,
         'message_list': message_list,
+        'conversation_items': conversation_items,
+        'typing_active': typing_active,
     })
 
 
@@ -565,3 +553,118 @@ def start_conversation(request, user_id):
     conversation = Conversation.objects.create()
     conversation.participants.add(request.user, other_user)
     return redirect('message_detail', conversation_id=conversation.id)
+
+
+def _get_conversation_items(user):
+    last_message_subquery = Message.objects.filter(
+        conversation=OuterRef('pk')
+    ).order_by('-created_at')
+
+    conversations = Conversation.objects.filter(participants=user).annotate(
+        unread_count=Count(
+            'messages',
+            filter=Q(messages__recipient=user, messages__is_read=False),
+            distinct=True
+        ),
+        last_message_id=Subquery(last_message_subquery.values('id')[:1])
+    ).prefetch_related('participants', 'participants__profile').order_by('-last_message_at', '-updated_at')
+
+    last_message_ids = [c.last_message_id for c in conversations if c.last_message_id]
+    last_messages = Message.objects.filter(id__in=last_message_ids).select_related('sender', 'recipient')
+    last_message_map = {m.id: m for m in last_messages}
+
+    typing_cutoff = timezone.now() - timezone.timedelta(seconds=7)
+    typing_statuses = TypingStatus.objects.filter(
+        conversation__in=conversations,
+        updated_at__gte=typing_cutoff
+    )
+    typing_map = {(ts.conversation_id, ts.user_id): True for ts in typing_statuses}
+
+    conversation_items = []
+    for conversation in conversations:
+        other_user = conversation.participants.exclude(id=user.id).first()
+        is_typing = False
+        if other_user:
+            is_typing = typing_map.get((conversation.id, other_user.id), False)
+        conversation_items.append({
+            'conversation': conversation,
+            'other_user': other_user,
+            'last_message': last_message_map.get(conversation.last_message_id),
+            'unread_count': conversation.unread_count,
+            'is_typing': is_typing,
+        })
+
+    return conversation_items
+
+
+@login_required
+def messages_poll(request):
+    conversation_items = _get_conversation_items(request.user)
+    payload = []
+    for item in conversation_items:
+        last_message = item['last_message']
+        other_user = item['other_user']
+        payload.append({
+            'conversation_id': item['conversation'].id,
+            'other_user': {
+                'id': other_user.id if other_user else None,
+                'username': other_user.username if other_user else '',
+                'avatar_url': other_user.profile.avatar_url if other_user else '',
+            },
+            'last_message': {
+                'body': last_message.body if last_message else '',
+                'created_at': last_message.created_at.isoformat() if last_message else '',
+            },
+            'unread_count': item['unread_count'],
+            'is_typing': item['is_typing'],
+        })
+
+    return JsonResponse({'items': payload})
+
+
+@login_required
+@require_http_methods(["GET"])
+def message_poll(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+    other_user = conversation.participants.exclude(id=request.user.id).first()
+
+    after = request.GET.get('after')
+    message_qs = conversation.messages.select_related('sender').order_by('created_at')
+    if after and after.isdigit():
+        message_qs = message_qs.filter(id__gt=int(after))
+
+    messages_payload = []
+    for msg in message_qs:
+        messages_payload.append({
+            'id': msg.id,
+            'sender_id': msg.sender_id,
+            'sender_name': msg.sender.username,
+            'created_at': msg.created_at.isoformat(),
+            'body': msg.body,
+        })
+
+    typing_cutoff = timezone.now() - timezone.timedelta(seconds=7)
+    typing_active = False
+    if other_user:
+        typing_active = TypingStatus.objects.filter(
+            conversation=conversation,
+            user=other_user,
+            updated_at__gte=typing_cutoff
+        ).exists()
+
+    return JsonResponse({
+        'messages': messages_payload,
+        'typing_active': typing_active,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def typing_ping(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+    TypingStatus.objects.update_or_create(
+        conversation=conversation,
+        user=request.user,
+        defaults={'updated_at': timezone.now()}
+    )
+    return JsonResponse({'ok': True})

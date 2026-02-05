@@ -14,6 +14,9 @@ urlpatterns = [
     path('avatar/', views.update_avatar, name='update_avatar'),
     path('register/', views.register, name='register'),
     path('messages/', views.messages_list, name='messages_list'),
+    path('messages/poll/', views.messages_poll, name='messages_poll'),
     path('messages/start/<int:user_id>/', views.start_conversation, name='start_conversation'),
-    path('messages/<int:conversation_id>/', views.message_detail, name='message_detail')
+    path('messages/<int:conversation_id>/', views.message_detail, name='message_detail'),
+    path('messages/<int:conversation_id>/poll/', views.message_poll, name='message_poll'),
+    path('messages/<int:conversation_id>/typing/', views.typing_ping, name='typing_ping')
 ]
