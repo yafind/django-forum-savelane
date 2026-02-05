@@ -1,9 +1,8 @@
 <!-- main/templates/main/avatar_upload.html -->
+{% load static %}
 <form method="post" enctype="multipart/form-data" role="form" aria-label="Форма загрузки аватара">
     {% csrf_token %}
-    {% if profile.avatar %}
-        <img src="{{ profile.avatar.url }}" width="100" alt="Аватар пользователя" class="rounded-circle mb-2">
-    {% endif %}
+    <img src="{{ profile.avatar_url }}" width="100" alt="Аватар пользователя" class="rounded-circle mb-2">
     <div class="mb-3">
       <label for="id_avatar" class="form-label visually-hidden">Выберите файл аватара</label>
       <input id="id_avatar" type="file" name="avatar" accept="image/*" required class="form-control">

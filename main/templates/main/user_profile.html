@@ -15,10 +15,10 @@
 
   <!-- Аватар -->
       <div class="text-center mb-5">
-    {% with avatar_url=profile_user.profile.avatar.url|default:"" %}
+    {% with avatar_url=profile_user.profile.avatar_url %}
       <div class="d-inline-block p-2 bg-light rounded-circle">
         <img 
-          src="{% if avatar_url %}{{ avatar_url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+          src="{{ avatar_url }}"
           alt="Аватар {{ profile_user.username }}"
           class="rounded-circle border border-3 border-white shadow-sm"
           width="140"

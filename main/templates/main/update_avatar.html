@@ -17,12 +17,13 @@
           <div class="mb-3">
             <label class="form-label">Текущий аватар</label><br>
             <img 
-              src="{{ user.profile.avatar.url }}" 
+              src="{{ user.profile.avatar_url }}" 
               alt="Ваш аватар"
               class="rounded-circle mb-3"
               width="100"
               height="100"
               loading="lazy"
+              onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
             >
           </div>
           <div class="mb-3">

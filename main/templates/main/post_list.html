@@ -31,9 +31,9 @@
     <!-- Автор + аватар -->
     <div class="d-flex align-items-start mb-3">
       <!-- Аватар -->
-      {% with avatar_url=post.author.profile.avatar.url|default:"" %}
+      {% with avatar_url=post.author.profile.avatar_url %}
         <img 
-          src="{% if avatar_url %}{{ avatar_url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+          src="{{ avatar_url }}"
           alt="Аватар {{ post.author.username }}"
           class="rounded-circle border border-light me-3"
           width="50"

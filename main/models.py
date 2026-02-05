@@ -1,12 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.templatetags.static import static
 from django.urls import reverse
 from django.core.validators import FileExtensionValidator
 from PIL import Image
 import logging
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_AVATAR_NAME = 'avatars/default.png'
 
 
 class Section(models.Model):
@@ -65,6 +68,12 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.user.username} Profile'
+
+    @property
+    def avatar_url(self):
+        if not self.avatar or self.avatar.name == DEFAULT_AVATAR_NAME:
+            return static('images/default-avatar.png')
+        return self.avatar.url
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

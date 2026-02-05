@@ -153,9 +153,9 @@
                 <a class="dropdown-toggle d-flex align-items-center text-reset" 
                    href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
                    title="Мой профиль">
-                    {% with avatar_url=user.profile.avatar.url|default:"" %}
+                    {% with avatar_url=user.profile.avatar_url %}
                         <img 
-                            src="{% if avatar_url %}{{ avatar_url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}"
+                            src="{{ avatar_url }}"
                             alt="{{ user.username }}"
                             class="rounded-circle border"
                             width="32"
