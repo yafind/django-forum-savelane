@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load emoji_extras %}
 {% block title %}Создать тему – {{ block.super }}{% endblock %}
 
 {% block content %}
@@ -12,7 +13,7 @@
       {% for section in sections %}
         <!-- Заголовок раздела -->
         <div class="list-group-item bg-light fw-bold">
-          {{ section.title }}
+          {{ section.title|emoji_codes }}
           {% if section.description %}
             <br><small class="text-muted">{{ section.description }}</small>
           {% endif %}
@@ -22,7 +23,7 @@
         {% for subsection in section.subsections.all %}
           <a href="{% url 'new_thread' subsection.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start" aria-label="Создать тему в {{ subsection.title }}">
             <div>
-              <div class="fw-medium text-truncate">{{ subsection.title }}</div>
+              <div class="fw-medium text-truncate">{{ subsection.title|emoji_codes }}</div>
               {% if subsection.description %}
                 <small class="text-muted">{{ subsection.description }}</small>
               {% endif %}

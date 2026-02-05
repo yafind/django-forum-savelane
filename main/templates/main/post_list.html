@@ -1,12 +1,14 @@
 {% extends 'main/base.html' %}
 {% load static %}
+{% load emoji_extras %}
 
 {% block title %}{{ thread.title }} – Форум{% endblock %}
 
 {% block content %}
+{% emoji_catalog as emoji_catalog %}
 <div class="container py-4">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-  <h1 class="mb-0 text-truncate">{{ thread.title }}</h1>
+  <h1 class="mb-0 text-truncate">{{ thread.title|emoji_codes }}</h1>
 
   <div class="d-flex gap-2">
     {% if user.is_staff %}
@@ -56,7 +58,7 @@
 
     <!-- Текст поста -->
     {% if post.text %}
-      <div class="mb-3 fs-6">{{ post.text|linebreaks }}</div>
+      <div class="mb-3 fs-6">{{ post.text|emoji_codes }}</div>
     {% endif %}
 
     <!-- Изображение -->
@@ -124,14 +126,27 @@
     <div class="card-body">
       <form method="post" enctype="multipart/form-data" id="post-form" action="{% url 'new_post' thread.id %}">
         {% csrf_token %}
+        <div class="emoji-toolbar">
+          <button type="button" class="emoji-toggle" data-emoji-toggle aria-label="Открыть эмодзи">😊</button>
+        </div>
+        <div class="emoji-panel" data-emoji-panel hidden>
+          <div class="emoji-tabs">
+            <button type="button" class="emoji-tab is-active" data-emoji-tab="emoji">Emoji</button>
+            <button type="button" class="emoji-tab" data-emoji-tab="gif">GIF</button>
+          </div>
+          <div class="emoji-grid" data-emoji-grid></div>
+        </div>
         <div class="mb-3">
-          <textarea 
+          <div class="emoji-wrapper">
+            <div class="emoji-suggest" data-emoji-suggest></div>
+            <textarea 
             name="text" 
             class="form-control" 
             rows="4" 
             placeholder="Напишите ваше сообщение..."
             required
-          ></textarea>
+            ></textarea>
+          </div>
         </div>
         <div class="mb-3">
           <label for="image-input" class="form-label">Изображение (необязательно)</label>
@@ -148,7 +163,110 @@
     </div>
   </div>
 
+  {{ emoji_catalog|json_script:"emoji-catalog" }}
+
   <script>
+    const emojiCatalog = JSON.parse(document.getElementById('emoji-catalog').textContent || '[]');
+
+    function insertAtCursor(textarea, value) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const before = textarea.value.substring(0, start);
+      const after = textarea.value.substring(end);
+      textarea.value = `${before}${value}${after}`;
+      const newPos = start + value.length;
+      textarea.setSelectionRange(newPos, newPos);
+      textarea.focus();
+    }
+
+    function setupEmojiPicker(root) {
+      const textarea = root.querySelector('textarea[name="text"]');
+      const panel = root.querySelector('[data-emoji-panel]');
+      const grid = root.querySelector('[data-emoji-grid]');
+      const toggle = root.querySelector('[data-emoji-toggle]');
+      const suggest = root.querySelector('[data-emoji-suggest]');
+      const tabs = root.querySelectorAll('[data-emoji-tab]');
+
+      if (!textarea || !panel || !grid || !toggle || !suggest) return;
+
+      function renderGrid(mode) {
+        grid.innerHTML = '';
+        const items = mode === 'gif'
+          ? emojiCatalog.filter((item) => item.url)
+          : emojiCatalog;
+
+        if (!items.length) {
+          grid.innerHTML = '<div class="text-muted small">Нет GIF-эмодзи</div>';
+          return;
+        }
+
+        items.forEach((item) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'emoji-btn';
+          btn.title = `:${item.code}:`;
+          if (mode === 'gif' && item.url) {
+            btn.innerHTML = `<img src="${item.url}" alt=":${item.code}:" class="emoji" loading="lazy">`;
+          } else {
+            btn.textContent = item.char || `:${item.code}:`;
+          }
+          btn.addEventListener('click', () => insertAtCursor(textarea, `:${item.code}:`));
+          grid.appendChild(btn);
+        });
+      }
+
+      function setTab(active) {
+        tabs.forEach((tab) => tab.classList.toggle('is-active', tab.dataset.emojiTab === active));
+        renderGrid(active);
+      }
+
+      toggle.addEventListener('click', () => {
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) {
+          setTab(panel.dataset.activeTab || 'emoji');
+        }
+      });
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          panel.dataset.activeTab = tab.dataset.emojiTab;
+          setTab(tab.dataset.emojiTab);
+        });
+      });
+
+      textarea.addEventListener('input', () => {
+        const text = textarea.value.slice(0, textarea.selectionStart);
+        const match = text.match(/(^|\s):([a-z0-9_+-]{1,})$/i);
+        if (!match) {
+          suggest.style.display = 'none';
+          return;
+        }
+
+        const prefix = match[2].toLowerCase();
+        const suggestions = emojiCatalog.filter((item) => item.code.startsWith(prefix)).slice(0, 6);
+        if (!suggestions.length) {
+          suggest.style.display = 'none';
+          return;
+        }
+
+        suggest.innerHTML = '';
+        suggestions.forEach((item) => {
+          const entry = document.createElement('div');
+          entry.className = 'emoji-suggest-item';
+          entry.textContent = `:${item.code}: ${item.char || ''}`.trim();
+          entry.addEventListener('click', () => {
+            const before = textarea.value.substring(0, textarea.selectionStart).replace(/(:[a-z0-9_+-]*)$/i, `:${item.code}:`);
+            const after = textarea.value.substring(textarea.selectionStart);
+            textarea.value = `${before}${after}`;
+            textarea.focus();
+            suggest.style.display = 'none';
+          });
+          suggest.appendChild(entry);
+        });
+        suggest.style.display = 'block';
+      });
+    }
+
     document.getElementById('image-input').addEventListener('change', function(e) {
       const preview = document.getElementById('image-preview');
       const img = document.getElementById('preview-img');
@@ -164,7 +282,10 @@
         preview.style.display = 'none';
       }
     });
+
+    setupEmojiPicker(document.getElementById('post-form'));
   </script>
+
 {% else %}
   <div class="alert alert-light border border-muted mt-5 text-center rounded-3 py-4">
     <i class="fas fa-sign-in-alt me-2 text-muted" aria-hidden="true"></i>

@@ -1,9 +1,11 @@
 {% extends 'main/base.html' %}
 {% load static %}
+{% load emoji_extras %}
 
 {% block title %}Диалог с {{ other_user.username }} – {{ block.super }}{% endblock %}
 
 {% block content %}
+{% emoji_catalog as emoji_catalog %}
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
 
@@ -277,7 +279,7 @@
                 </div>
                 {% if item.last_message %}
                   <div class="tg-item-text text-truncate">
-                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body }}{% endif %}
+                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body|emoji_codes }}{% endif %}
                   </div>
                 {% else %}
                   <div class="tg-item-text">{% if item.is_typing %}печатает…{% else %}Нет сообщений{% endif %}</div>
@@ -323,7 +325,7 @@
                 <div class="tg-meta {% if msg.sender_id == user.id %}{% else %}is-them{% endif %}">
                   {{ msg.sender.username }} • {{ msg.created_at|date:"d.m.Y H:i" }}
                 </div>
-                <div style="white-space: pre-wrap;">{{ msg.body }}</div>
+                <div style="white-space: pre-wrap;">{{ msg.body|emoji_codes }}</div>
               </div>
             </div>
           {% endfor %}
@@ -335,7 +337,18 @@
       <div class="tg-composer">
         <form method="post" aria-label="Форма личного сообщения">
           {% csrf_token %}
-          <div class="tg-input">
+          <div class="emoji-toolbar">
+            <button type="button" class="emoji-toggle" data-emoji-toggle aria-label="Открыть эмодзи">😊</button>
+          </div>
+          <div class="emoji-panel" data-emoji-panel hidden>
+            <div class="emoji-tabs">
+              <button type="button" class="emoji-tab is-active" data-emoji-tab="emoji">Emoji</button>
+              <button type="button" class="emoji-tab" data-emoji-tab="gif">GIF</button>
+            </div>
+            <div class="emoji-grid" data-emoji-grid></div>
+          </div>
+          <div class="tg-input emoji-wrapper">
+            <div class="emoji-suggest" data-emoji-suggest></div>
             <textarea name="body" class="form-control" rows="2" placeholder="Напишите сообщение..." required></textarea>
             <button type="submit" class="tg-send">Отправить</button>
           </div>
@@ -345,11 +358,113 @@
   </div>
 </div>
 
+{{ emoji_catalog|json_script:"emoji-catalog" }}
+
 <script>
   const convoList = document.querySelector('[data-conversation-list]');
   const messageList = document.querySelector('[data-message-list]');
   const typingIndicator = document.getElementById('typing-indicator');
   const conversationId = {{ conversation.id }};
+  const emojiCatalog = JSON.parse(document.getElementById('emoji-catalog').textContent || '[]');
+
+  function insertAtCursor(textarea, value) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after = textarea.value.substring(end);
+    textarea.value = `${before}${value}${after}`;
+    const newPos = start + value.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.focus();
+  }
+
+  function setupEmojiPicker(root) {
+    const textarea = root.querySelector('textarea[name="body"]');
+    const panel = root.querySelector('[data-emoji-panel]');
+    const grid = root.querySelector('[data-emoji-grid]');
+    const toggle = root.querySelector('[data-emoji-toggle]');
+    const suggest = root.querySelector('[data-emoji-suggest]');
+    const tabs = root.querySelectorAll('[data-emoji-tab]');
+
+    if (!textarea || !panel || !grid || !toggle || !suggest) return;
+
+    function renderGrid(mode) {
+      grid.innerHTML = '';
+      const items = mode === 'gif'
+        ? emojiCatalog.filter((item) => item.url)
+        : emojiCatalog;
+
+      if (!items.length) {
+        grid.innerHTML = '<div class="text-muted small">Нет GIF-эмодзи</div>';
+        return;
+      }
+
+      items.forEach((item) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-btn';
+        btn.title = `:${item.code}:`;
+        if (mode === 'gif' && item.url) {
+          btn.innerHTML = `<img src="${item.url}" alt=":${item.code}:" class="emoji" loading="lazy">`;
+        } else {
+          btn.textContent = item.char || `:${item.code}:`;
+        }
+        btn.addEventListener('click', () => insertAtCursor(textarea, `:${item.code}:`));
+        grid.appendChild(btn);
+      });
+    }
+
+    function setTab(active) {
+      tabs.forEach((tab) => tab.classList.toggle('is-active', tab.dataset.emojiTab === active));
+      renderGrid(active);
+    }
+
+    toggle.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        setTab(panel.dataset.activeTab || 'emoji');
+      }
+    });
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        panel.dataset.activeTab = tab.dataset.emojiTab;
+        setTab(tab.dataset.emojiTab);
+      });
+    });
+
+    textarea.addEventListener('input', () => {
+      const text = textarea.value.slice(0, textarea.selectionStart);
+      const match = text.match(/(^|\s):([a-z0-9_+-]{1,})$/i);
+      if (!match) {
+        suggest.style.display = 'none';
+        return;
+      }
+
+      const prefix = match[2].toLowerCase();
+      const suggestions = emojiCatalog.filter((item) => item.code.startsWith(prefix)).slice(0, 6);
+      if (!suggestions.length) {
+        suggest.style.display = 'none';
+        return;
+      }
+
+      suggest.innerHTML = '';
+      suggestions.forEach((item) => {
+        const entry = document.createElement('div');
+        entry.className = 'emoji-suggest-item';
+        entry.textContent = `:${item.code}: ${item.char || ''}`.trim();
+        entry.addEventListener('click', () => {
+          const before = textarea.value.substring(0, textarea.selectionStart).replace(/(:[a-z0-9_+-]*)$/i, `:${item.code}:`);
+          const after = textarea.value.substring(textarea.selectionStart);
+          textarea.value = `${before}${after}`;
+          textarea.focus();
+          suggest.style.display = 'none';
+        });
+        suggest.appendChild(entry);
+      });
+      suggest.style.display = 'block';
+    });
+  }
 
   function getCsrfToken() {
     const value = `; ${document.cookie}`;
@@ -362,7 +477,7 @@
     if (!convoList) return;
     convoList.innerHTML = '';
     items.forEach((item) => {
-      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body || 'Нет сообщений');
+      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body_html || 'Нет сообщений');
       const timeText = item.last_message.created_at
         ? new Date(item.last_message.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : '';
@@ -408,7 +523,7 @@
 
     const body = document.createElement('div');
     body.style.whiteSpace = 'pre-wrap';
-    body.textContent = msg.body;
+    body.innerHTML = msg.body_html || msg.body;
 
     bubble.appendChild(meta);
     bubble.appendChild(body);
@@ -474,6 +589,8 @@
       sendTypingPing();
     });
   }
+
+  setupEmojiPicker(document.querySelector('.tg-composer'));
 
   setInterval(pollConversationList, 12000);
   setInterval(pollMessages, 3000);

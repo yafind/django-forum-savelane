@@ -1,4 +1,5 @@
 {% extends 'main/base.html' %}
+{% load emoji_extras %}
 {% block title %}Форум – {{ block.super }}{% endblock %}
 
 {% block content %}
@@ -17,14 +18,14 @@
           {% comment %}View should prefetch `subsections` to avoid N+1 queries: `.prefetch_related('subsections')`{% endcomment %}
           {% for section in sections %}
             <div class="list-group-item bg-light fw-semibold text-dark">
-              <span class="section-title">{{ section.title }}</span>
+              <span class="section-title">{{ section.title|emoji_codes }}</span>
             </div>
             <ul class="list-group list-group-flush" aria-label="{{ section.title }} subsections">
               {% for subsection in section.subsections.all %}
                 <li class="list-group-item py-2">
                   <a href="{% url 'thread_list' subsection.pk %}" class="d-flex align-items-center text-decoration-none">
                     <i class="fas fa-comments me-2 text-muted" aria-hidden="true"></i>
-                    <span class="flex-grow-1 text-truncate">{{ subsection.title }}</span>
+                    <span class="flex-grow-1 text-truncate">{{ subsection.title|emoji_codes }}</span>
                     <i class="fas fa-chevron-right ms-2 text-muted small" aria-hidden="true"></i>
                   </a>
                 </li>
@@ -55,11 +56,11 @@
               <div class="d-flex flex-column flex-md-row justify-content-between">
                 <div class="mb-1 mb-md-0">
                   <strong class="d-block text-truncate">
-                    <span class="badge bg-warning text-dark me-2">PIN</span>{{ thread.title }}
+                    <span class="badge bg-warning text-dark me-2">PIN</span>{{ thread.title|emoji_codes }}
                   </strong>
                   <small class="text-muted d-block">
                     <i class="fas fa-folder-open me-1" aria-hidden="true"></i>
-                    {{ thread.subsection.section.title }} → {{ thread.subsection.title }}
+                    {{ thread.subsection.section.title|emoji_codes }} → {{ thread.subsection.title|emoji_codes }}
                   </small>
                 </div>
                 <div class="text-end text-md-start">
@@ -93,10 +94,10 @@
             <a href="{% url 'post_list' thread.id %}" class="list-group-item list-group-item-action py-3">
               <div class="d-flex flex-column flex-md-row justify-content-between">
                 <div class="mb-2 mb-md-0">
-                  <strong class="d-block text-truncate">{{ thread.title }}</strong>
+                  <strong class="d-block text-truncate">{{ thread.title|emoji_codes }}</strong>
                   <small class="text-muted d-block">
                     <i class="fas fa-folder me-1" aria-hidden="true"></i>
-                    {{ thread.subsection.section.title }} → {{ thread.subsection.title }}
+                    {{ thread.subsection.section.title|emoji_codes }} → {{ thread.subsection.title|emoji_codes }}
                   </small>
                 </div>
                 <div class="text-end text-md-start text-nowrap">

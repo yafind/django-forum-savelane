@@ -13,6 +13,7 @@ from django_ratelimit.decorators import ratelimit
 import logging
 
 from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message, TypingStatus
+from .emoji import render_emoji_html
 from .forms import ThreadForm, AvatarForm, UserRegisterForm
 
 logger = logging.getLogger(__name__)
@@ -613,6 +614,7 @@ def messages_poll(request):
             },
             'last_message': {
                 'body': last_message.body if last_message else '',
+                'body_html': render_emoji_html(last_message.body) if last_message else '',
                 'created_at': last_message.created_at.isoformat() if last_message else '',
             },
             'unread_count': item['unread_count'],
@@ -641,6 +643,7 @@ def message_poll(request, conversation_id):
             'sender_name': msg.sender.username,
             'created_at': msg.created_at.isoformat(),
             'body': msg.body,
+            'body_html': render_emoji_html(msg.body),
         })
 
     typing_cutoff = timezone.now() - timezone.timedelta(seconds=7)

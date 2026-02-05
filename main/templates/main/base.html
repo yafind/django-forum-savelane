@@ -96,6 +96,99 @@
             object-fit: cover;
         }
 
+        .emoji {
+            width: 1.1em;
+            height: 1.1em;
+            vertical-align: -0.2em;
+        }
+
+        .emoji-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .emoji-toggle {
+            border: 1px solid rgba(60, 80, 120, 0.2);
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 6px 10px;
+            font-size: 1rem;
+        }
+
+        .emoji-panel {
+            border: 1px solid rgba(60, 80, 120, 0.12);
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 10px 20px rgba(20, 30, 60, 0.08);
+            margin-bottom: 10px;
+        }
+
+        .emoji-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .emoji-tab {
+            border: 1px solid rgba(60, 80, 120, 0.2);
+            background: #f8f9fc;
+            border-radius: 10px;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+        }
+
+        .emoji-tab.is-active {
+            background: #2b6ef6;
+            border-color: #2b6ef6;
+            color: #ffffff;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+            gap: 6px;
+        }
+
+        .emoji-btn {
+            border: none;
+            background: #f7f9fc;
+            border-radius: 8px;
+            padding: 6px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-suggest {
+            border: 1px solid rgba(60, 80, 120, 0.12);
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(20, 30, 60, 0.08);
+            padding: 6px;
+            display: none;
+            position: absolute;
+            z-index: 20;
+        }
+
+        .emoji-wrapper {
+            position: relative;
+        }
+
+        .emoji-suggest-item {
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .emoji-suggest-item:hover {
+            background: #eef3ff;
+        }
+
         /* Футер */
         .footer {
             flex-shrink: 0;

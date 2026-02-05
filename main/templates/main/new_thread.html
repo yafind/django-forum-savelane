@@ -1,7 +1,9 @@
 {% extends 'main/base.html' %}
+{% load emoji_extras %}
 {% block title %}Новая тема в {{ subsection.title }} – {{ block.super }}{% endblock %}
 
 {% block content %}
+{% emoji_catalog as emoji_catalog %}
 <div class="container py-4">
   <div class="row justify-content-center">
   <div class="col-lg-8">
@@ -35,6 +37,18 @@
 
           <div class="mb-4">
             <label for="id_text" class="form-label fw-medium">Первое сообщение</label>
+            <div class="emoji-toolbar">
+              <button type="button" class="emoji-toggle" data-emoji-toggle aria-label="Открыть эмодзи">😊</button>
+            </div>
+            <div class="emoji-panel" data-emoji-panel hidden>
+              <div class="emoji-tabs">
+                <button type="button" class="emoji-tab is-active" data-emoji-tab="emoji">Emoji</button>
+                <button type="button" class="emoji-tab" data-emoji-tab="gif">GIF</button>
+              </div>
+              <div class="emoji-grid" data-emoji-grid></div>
+            </div>
+            <div class="emoji-wrapper">
+              <div class="emoji-suggest" data-emoji-suggest></div>
             <textarea
               id="id_text"
               name="text"
@@ -42,7 +56,8 @@
               rows="6"
               required
               placeholder="Опишите суть темы. Используйте абзацы для лучшей читаемости."
-            ></textarea>
+              ></textarea>
+            </div>
             {% if form.text.errors %}
               <div class="invalid-feedback mt-1">{{ form.text.errors|first }}</div>
             {% endif %}
@@ -62,4 +77,111 @@
   </div>
   </div>
 </div>
+
+{{ emoji_catalog|json_script:"emoji-catalog" }}
+
+<script>
+  const emojiCatalog = JSON.parse(document.getElementById('emoji-catalog').textContent || '[]');
+
+  function insertAtCursor(textarea, value) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after = textarea.value.substring(end);
+    textarea.value = `${before}${value}${after}`;
+    const newPos = start + value.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.focus();
+  }
+
+  function setupEmojiPicker(root) {
+    const textarea = root.querySelector('textarea[name="text"]');
+    const panel = root.querySelector('[data-emoji-panel]');
+    const grid = root.querySelector('[data-emoji-grid]');
+    const toggle = root.querySelector('[data-emoji-toggle]');
+    const suggest = root.querySelector('[data-emoji-suggest]');
+    const tabs = root.querySelectorAll('[data-emoji-tab]');
+
+    if (!textarea || !panel || !grid || !toggle || !suggest) return;
+
+    function renderGrid(mode) {
+      grid.innerHTML = '';
+      const items = mode === 'gif'
+        ? emojiCatalog.filter((item) => item.url)
+        : emojiCatalog;
+
+      if (!items.length) {
+        grid.innerHTML = '<div class="text-muted small">Нет GIF-эмодзи</div>';
+        return;
+      }
+
+      items.forEach((item) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-btn';
+        btn.title = `:${item.code}:`;
+        if (mode === 'gif' && item.url) {
+          btn.innerHTML = `<img src="${item.url}" alt=":${item.code}:" class="emoji" loading="lazy">`;
+        } else {
+          btn.textContent = item.char || `:${item.code}:`;
+        }
+        btn.addEventListener('click', () => insertAtCursor(textarea, `:${item.code}:`));
+        grid.appendChild(btn);
+      });
+    }
+
+    function setTab(active) {
+      tabs.forEach((tab) => tab.classList.toggle('is-active', tab.dataset.emojiTab === active));
+      renderGrid(active);
+    }
+
+    toggle.addEventListener('click', () => {
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        setTab(panel.dataset.activeTab || 'emoji');
+      }
+    });
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        panel.dataset.activeTab = tab.dataset.emojiTab;
+        setTab(tab.dataset.emojiTab);
+      });
+    });
+
+    textarea.addEventListener('input', () => {
+      const text = textarea.value.slice(0, textarea.selectionStart);
+      const match = text.match(/(^|\s):([a-z0-9_+-]{1,})$/i);
+      if (!match) {
+        suggest.style.display = 'none';
+        return;
+      }
+
+      const prefix = match[2].toLowerCase();
+      const suggestions = emojiCatalog.filter((item) => item.code.startsWith(prefix)).slice(0, 6);
+      if (!suggestions.length) {
+        suggest.style.display = 'none';
+        return;
+      }
+
+      suggest.innerHTML = '';
+      suggestions.forEach((item) => {
+        const entry = document.createElement('div');
+        entry.className = 'emoji-suggest-item';
+        entry.textContent = `:${item.code}: ${item.char || ''}`.trim();
+        entry.addEventListener('click', () => {
+          const before = textarea.value.substring(0, textarea.selectionStart).replace(/(:[a-z0-9_+-]*)$/i, `:${item.code}:`);
+          const after = textarea.value.substring(textarea.selectionStart);
+          textarea.value = `${before}${after}`;
+          textarea.focus();
+          suggest.style.display = 'none';
+        });
+        suggest.appendChild(entry);
+      });
+      suggest.style.display = 'block';
+    });
+  }
+
+  setupEmojiPicker(document.querySelector('form'));
+</script>
 {% endblock %}

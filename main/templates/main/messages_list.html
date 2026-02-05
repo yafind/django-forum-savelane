@@ -1,5 +1,6 @@
 {% extends 'main/base.html' %}
 {% load static %}
+{% load emoji_extras %}
 
 {% block title %}Личные сообщения – {{ block.super }}{% endblock %}
 
@@ -149,7 +150,7 @@
                 </div>
                 {% if item.last_message %}
                   <div class="tg-item-text text-truncate">
-                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body }}{% endif %}
+                    {% if item.is_typing %}печатает…{% else %}{{ item.last_message.body|emoji_codes }}{% endif %}
                   </div>
                 {% else %}
                   <div class="tg-item-text">{% if item.is_typing %}печатает…{% else %}Нет сообщений{% endif %}</div>
@@ -175,7 +176,7 @@
     if (!conversationList) return;
     conversationList.innerHTML = '';
     items.forEach((item) => {
-      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body || 'Нет сообщений');
+      const typingText = item.is_typing ? 'печатает…' : (item.last_message.body_html || 'Нет сообщений');
       const timeText = item.last_message.created_at
         ? new Date(item.last_message.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         : '';
