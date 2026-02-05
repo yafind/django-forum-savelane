@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, Section, Subsection, Thread, Post
+from .models import Profile, Section, Subsection, Thread, Post, Conversation, Message
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
@@ -29,3 +29,16 @@ class PostAdmin(admin.ModelAdmin):
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ['user', 'avatar']
+
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'last_message_at', 'updated_at')
+    search_fields = ('id',)
+
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'conversation', 'sender', 'recipient', 'created_at', 'is_read')
+    list_filter = ('is_read', 'created_at')
+    search_fields = ('body', 'sender__username', 'recipient__username')

@@ -1,0 +1,48 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Личные сообщения – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Личные сообщения</h1>
+  </div>
+
+  {% if conversation_items %}
+    <div class="list-group">
+      {% for item in conversation_items %}
+        <a href="{% url 'message_detail' item.conversation.id %}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+          <img
+            src="{{ item.other_user.profile.avatar_url }}"
+            alt="Аватар {{ item.other_user.username }}"
+            class="rounded-circle border"
+            width="44"
+            height="44"
+            loading="lazy"
+            onerror="this.onerror=null; this.src='{% static "images/default-avatar.png" %}';"
+          >
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">{{ item.other_user.username }}</div>
+              {% if item.last_message %}
+                <div class="text-muted small">{{ item.last_message.created_at|date:"d.m.Y H:i" }}</div>
+              {% endif %}
+            </div>
+            {% if item.last_message %}
+              <div class="text-muted small text-truncate">{{ item.last_message.body }}</div>
+            {% else %}
+              <div class="text-muted small">Нет сообщений</div>
+            {% endif %}
+          </div>
+          {% if item.unread_count %}
+            <span class="badge bg-primary rounded-pill">{{ item.unread_count }}</span>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light border">Пока нет диалогов.</div>
+  {% endif %}
+</div>
+{% endblock %}

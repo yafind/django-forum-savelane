@@ -57,6 +57,11 @@
   <!-- Действия -->
   <div class="text-center">
     <div class="d-flex flex-wrap justify-content-center gap-2">
+      {% if user.is_authenticated and user.id != profile_user.id %}
+        <a href="{% url 'start_conversation' profile_user.id %}" class="btn btn-outline-primary btn-sm px-3" aria-label="Написать сообщение">
+          <i class="fas fa-envelope me-1" aria-hidden="true"></i> Написать
+        </a>
+      {% endif %}
       <a href="{% url 'update_avatar' %}" class="btn btn-outline-primary btn-sm px-3" aria-label="Изменить аватар">
         <i class="fas fa-camera me-1" aria-hidden="true"></i> Изменить аватар
       </a>

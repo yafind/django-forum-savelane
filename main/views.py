@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import IntegrityError, transaction
+from django.db.models import Count, OuterRef, Subquery, Q
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.models import User
@@ -10,7 +11,7 @@ from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 import logging
 
-from .models import Section, Subsection, Thread, Post, Profile
+from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message
 from .forms import ThreadForm, AvatarForm, UserRegisterForm
 
 logger = logging.getLogger(__name__)
@@ -469,3 +470,98 @@ def choose_subsection(request):
     """
     sections = Section.objects.prefetch_related('subsections').all()
     return render(request, 'main/choose_subsection.html', {'sections': sections})
+
+
+# ==============================================================================
+# ЛИЧНЫЕ СООБЩЕНИЯ
+
+@login_required
+def messages_list(request):
+    last_message_subquery = Message.objects.filter(
+        conversation=OuterRef('pk')
+    ).order_by('-created_at')
+
+    conversations = Conversation.objects.filter(participants=request.user).annotate(
+        unread_count=Count(
+            'messages',
+            filter=Q(messages__recipient=request.user, messages__is_read=False),
+            distinct=True
+        ),
+        last_message_id=Subquery(last_message_subquery.values('id')[:1])
+    ).prefetch_related('participants')
+
+    last_message_ids = [c.last_message_id for c in conversations if c.last_message_id]
+    last_messages = Message.objects.filter(id__in=last_message_ids).select_related('sender', 'recipient')
+    last_message_map = {m.id: m for m in last_messages}
+
+    conversation_items = []
+    for conversation in conversations:
+        other_user = conversation.participants.exclude(id=request.user.id).first()
+        conversation_items.append({
+            'conversation': conversation,
+            'other_user': other_user,
+            'last_message': last_message_map.get(conversation.last_message_id),
+            'unread_count': conversation.unread_count,
+        })
+
+    return render(request, 'main/messages_list.html', {
+        'conversation_items': conversation_items,
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def message_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id, participants=request.user)
+    other_user = conversation.participants.exclude(id=request.user.id).first()
+    if not other_user:
+        messages.error(request, 'Диалог недоступен.')
+        return redirect('messages_list')
+
+    if request.method == 'POST':
+        body = request.POST.get('body', '').strip()
+        if not body:
+            messages.error(request, 'Сообщение не может быть пустым.')
+        else:
+            Message.objects.create(
+                conversation=conversation,
+                sender=request.user,
+                recipient=other_user,
+                body=body
+            )
+            conversation.last_message_at = timezone.now()
+            conversation.save(update_fields=['last_message_at', 'updated_at'])
+            return redirect('message_detail', conversation_id=conversation.id)
+
+    Message.objects.filter(
+        conversation=conversation,
+        recipient=request.user,
+        is_read=False
+    ).update(is_read=True, read_at=timezone.now())
+
+    message_list = conversation.messages.select_related('sender').all()
+    return render(request, 'main/message_detail.html', {
+        'conversation': conversation,
+        'other_user': other_user,
+        'message_list': message_list,
+    })
+
+
+@login_required
+def start_conversation(request, user_id):
+    if request.user.id == user_id:
+        messages.error(request, 'Нельзя писать самому себе.')
+        return redirect('messages_list')
+
+    other_user = get_object_or_404(User, id=user_id)
+
+    existing = Conversation.objects.filter(participants=request.user).filter(
+        participants=other_user
+    ).annotate(participant_count=Count('participants')).filter(participant_count=2).first()
+
+    if existing:
+        return redirect('message_detail', conversation_id=existing.id)
+
+    conversation = Conversation.objects.create()
+    conversation.participants.add(request.user, other_user)
+    return redirect('message_detail', conversation_id=conversation.id)

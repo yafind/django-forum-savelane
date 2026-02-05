@@ -12,5 +12,8 @@ urlpatterns = [
     path('subsection/<int:subsection_id>/new_thread/', views.new_thread, name='new_thread'),
     path('thread/<int:thread_id>/toggle-pin/', views.toggle_pin_thread, name='toggle_pin_thread'),
     path('avatar/', views.update_avatar, name='update_avatar'),
-    path('register/', views.register, name='register')
+    path('register/', views.register, name='register'),
+    path('messages/', views.messages_list, name='messages_list'),
+    path('messages/start/<int:user_id>/', views.start_conversation, name='start_conversation'),
+    path('messages/<int:conversation_id>/', views.message_detail, name='message_detail')
 ]

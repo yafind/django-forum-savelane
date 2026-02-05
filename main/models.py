@@ -205,3 +205,64 @@ class Post(models.Model):
 
     def __str__(self):
         return f'Post by {self.author.username} in {self.thread.title}'
+
+
+class Conversation(models.Model):
+    """Диалог 1-на-1 между пользователями."""
+    participants = models.ManyToManyField(
+        User,
+        related_name='conversations',
+        verbose_name="Участники"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+    last_message_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата последнего сообщения")
+
+    class Meta:
+        ordering = ['-last_message_at', '-updated_at']
+        verbose_name = 'Диалог'
+        verbose_name_plural = 'Диалоги'
+        indexes = [
+            models.Index(fields=['-last_message_at']),
+        ]
+
+    def __str__(self):
+        return f"Conversation {self.id}"
+
+
+class Message(models.Model):
+    """Личное сообщение в диалоге."""
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        verbose_name="Диалог"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_messages',
+        verbose_name="Отправитель"
+    )
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_messages',
+        verbose_name="Получатель"
+    )
+    body = models.TextField(verbose_name="Текст")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата отправки")
+    is_read = models.BooleanField(default=False, verbose_name="Прочитано")
+    read_at = models.DateTimeField(blank=True, null=True, verbose_name="Дата прочтения")
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Сообщение'
+        verbose_name_plural = 'Сообщения'
+        indexes = [
+            models.Index(fields=['conversation', 'created_at']),
+            models.Index(fields=['recipient', 'is_read']),
+        ]
+
+    def __str__(self):
+        return f"Message {self.id}"
