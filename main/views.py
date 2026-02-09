@@ -62,7 +62,7 @@ def user_profile(request, user_id):
     wall_posts = WallPost.objects.filter(owner=user)
     wall_posts = wall_posts.select_related('author', 'owner').prefetch_related('comments__author')
     recent_posts = Post.objects.filter(author=user)
-    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:10]
+    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:5]
     return render(request, 'main/user_profile.html', {
         'profile_user': user,
         'post_count': post_count,
@@ -272,7 +272,7 @@ def user_profile(request, user_id):
     wall_posts = WallPost.objects.filter(owner=user)
     wall_posts = wall_posts.select_related('author', 'owner').prefetch_related('comments__author')
     recent_posts = Post.objects.filter(author=user)
-    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:10]
+    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:5]
     return render(request, 'main/user_profile.html', {
         'profile_user': user,
         'post_count': post_count,

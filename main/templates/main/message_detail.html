@@ -11,7 +11,8 @@
     font-family: "Manrope", "Segoe UI", sans-serif;
     background:
       radial-gradient(circle at 12% 18%, rgba(0, 122, 204, 0.12), transparent 45%),
-      radial-gradient(circle at 85% 12%, rgba(255, 143, 31, 0.12), transparent 40%);
+      radial-gradient(circle at 85% 12%, rgba(255, 143, 31, 0.12), transparent 40%),
+      var(--bg);
     min-height: calc(100vh - 64px);
     padding: 20px 0 40px;
   }
@@ -109,6 +110,14 @@
     color: var(--muted);
   }
 
+  .tg-chat a {
+    color: var(--text);
+  }
+
+  .tg-chat a:hover {
+    color: var(--accent-strong) !important;
+  }
+
   .tg-badge {
     background: var(--accent);
     color: #ffffff;
@@ -156,6 +165,7 @@
       radial-gradient(circle at 90% 10%, rgba(255, 143, 31, 0.1), transparent 40%);
     flex: 1;
     overflow-y: auto;
+    color: var(--text);
   }
 
   .tg-message {

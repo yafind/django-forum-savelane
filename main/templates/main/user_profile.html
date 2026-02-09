@@ -38,7 +38,7 @@
           <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
             <span class="fs-3 fw-bold text-primary">{{ post_count }}</span>
           </div>
-          <h5 class="card-title mb-0">Сообщений</h5>
+          <h5 class="card-title mb-0 text-white">Сообщений</h5>
         </div>
       </div>
     </div>
@@ -48,7 +48,7 @@
           <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
             <span class="fs-3 fw-bold text-success">{{ thread_count }}</span>
           </div>
-          <h5 class="card-title mb-0">Тем создано</h5>
+          <h5 class="card-title mb-0 text-white">Тем создано</h5>
         </div>
       </div>
     </div>
@@ -79,8 +79,32 @@
     </div>
   </div>
 
+  <!-- Сообщения в темах -->
+  <div class="card mt-4">
+    <div class="card-header bg-light">
+      <h2 class="h5 mb-0">Последние сообщения в темах</h2>
+    </div>
+    <div class="list-group list-group-flush">
+      {% if recent_posts %}
+        {% for post in recent_posts %}
+          <a href="{% url 'post_list' post.thread.id %}" class="list-group-item list-group-item-action">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong class="d-block">{{ post.thread.title }}</strong>
+                <small class="text-muted">{{ post.thread.subsection.section.title }} → {{ post.thread.subsection.title }}</small>
+              </div>
+              <div class="text-muted small">{{ post.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="list-group-item text-muted">Сообщений в темах пока нет.</div>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- Стена -->
-  <div class="card mt-5">
+  <div class="card mt-4">
     <div class="card-header bg-light d-flex align-items-center justify-content-between">
       <h2 class="h5 mb-0">Стена</h2>
       <span class="text-muted small">Записи {{ profile_user.username }}</span>
@@ -164,30 +188,6 @@
         </div>
       {% else %}
         <div class="text-muted">Пока нет записей на стене.</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Сообщения в темах -->
-  <div class="card mt-4">
-    <div class="card-header bg-light">
-      <h2 class="h5 mb-0">Последние сообщения в темах</h2>
-    </div>
-    <div class="list-group list-group-flush">
-      {% if recent_posts %}
-        {% for post in recent_posts %}
-          <a href="{% url 'post_list' post.thread.id %}" class="list-group-item list-group-item-action">
-            <div class="d-flex justify-content-between">
-              <div>
-                <strong class="d-block">{{ post.thread.title }}</strong>
-                <small class="text-muted">{{ post.thread.subsection.section.title }} → {{ post.thread.subsection.title }}</small>
-              </div>
-              <div class="text-muted small">{{ post.created_at|date:"d.m.Y H:i" }}</div>
-            </div>
-          </a>
-        {% endfor %}
-      {% else %}
-        <div class="list-group-item text-muted">Сообщений в темах пока нет.</div>
       {% endif %}
     </div>
   </div>
