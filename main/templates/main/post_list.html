@@ -6,6 +6,78 @@
 
 {% block content %}
 {% emoji_catalog as emoji_catalog %}
+<style>
+  .tg-compose {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .tg-compose-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+  }
+
+  .tg-compose-input {
+    flex: 1;
+  }
+
+  .tg-input-field {
+    position: relative;
+  }
+
+  .tg-input-tools {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .tg-icon-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tg-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .tg-compose textarea {
+    border-radius: 16px;
+    min-height: 64px;
+    background: var(--surface-3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding-right: 120px;
+  }
+
+  .tg-send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(0, 122, 204, 0.35);
+    color: #ffffff;
+  }
+
+  .tg-send-btn:hover {
+    background: var(--accent-strong);
+  }
+</style>
 <div class="container py-4">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
   <h1 class="mb-0 text-truncate">{{ thread.title|emoji_codes }}</h1>
@@ -58,13 +130,13 @@
 
     <!-- Текст поста -->
     {% if post.text %}
-      <div class="mb-3 fs-6">{{ post.text|emoji_codes }}</div>
+      <div class="mb-3 fs-6 text-white">{{ post.text|emoji_codes }}</div>
     {% endif %}
 
     <!-- Изображение -->
     {% if post.image %}
-      <div class="mt-2">
-        <img 
+        <div class="mb-3">
+          <input type="file" name="image" class="form-control visually-hidden" accept="image/*" id="image-input">
           src="{{ post.image.url }}" 
           alt="Изображение к посту"
           class="img-fluid rounded border"
@@ -124,11 +196,8 @@
       <h5 class="mb-0">Новое сообщение</h5>
     </div>
     <div class="card-body">
-      <form method="post" enctype="multipart/form-data" id="post-form" action="{% url 'new_post' thread.id %}">
+      <form method="post" enctype="multipart/form-data" id="post-form" class="tg-compose" action="{% url 'new_post' thread.id %}">
         {% csrf_token %}
-        <div class="emoji-toolbar">
-          <button type="button" class="emoji-toggle" data-emoji-toggle aria-label="Открыть эмодзи">😊</button>
-        </div>
         <div class="emoji-panel" data-emoji-panel hidden>
           <div class="emoji-tabs">
             <button type="button" class="emoji-tab is-active" data-emoji-tab="emoji">Emoji</button>
@@ -136,29 +205,39 @@
           </div>
           <div class="emoji-grid" data-emoji-grid></div>
         </div>
-        <div class="mb-3">
-          <div class="emoji-wrapper">
-            <div class="emoji-suggest" data-emoji-suggest></div>
-            <textarea 
-            name="text" 
-            class="form-control" 
-            rows="4" 
-            placeholder="Напишите ваше сообщение..."
-            required
-            ></textarea>
+        <div class="mb-3 tg-compose-row">
+          <div class="tg-compose-input emoji-wrapper">
+            <div class="tg-input-field">
+              <div class="emoji-suggest" data-emoji-suggest></div>
+              <textarea 
+              name="text" 
+              class="form-control" 
+              rows="3" 
+              placeholder="Напишите ваше сообщение..."
+              required
+              ></textarea>
+              <div class="tg-input-tools">
+                <button type="button" class="tg-icon-btn" data-attach aria-label="Прикрепить фото">
+                  <i class="fas fa-paperclip" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="tg-icon-btn" data-emoji-toggle aria-label="Открыть эмодзи">
+                  <i class="far fa-smile" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
           </div>
+          <button type="submit" class="tg-send-btn" aria-label="Отправить сообщение">
+            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="mb-3">
           <label for="image-input" class="form-label">Изображение (необязательно)</label>
           <input type="file" name="image" class="form-control" accept="image/*" id="image-input">
           <div class="form-text text-muted">Поддерживаются JPG, PNG, до 5 МБ</div>
           <div id="image-preview" class="mt-2" style="display: none;">
-            <img id="preview-img" class="img-thumbnail rounded" style="max-height: 200px; object-fit: contain; border: 1px solid #e9ecef;">
+            <img id="preview-img" class="img-thumbnail rounded" style="max-height: 200px; object-fit: contain; border: 1px solid var(--border);">
           </div>
         </div>
-        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2" aria-label="Отправить сообщение">
-          <i class="fas fa-paper-plane me-1" aria-hidden="true"></i> Отправить
-        </button>
       </form>
     </div>
   </div>
@@ -186,6 +265,8 @@
       const toggle = root.querySelector('[data-emoji-toggle]');
       const suggest = root.querySelector('[data-emoji-suggest]');
       const tabs = root.querySelectorAll('[data-emoji-tab]');
+      const attach = root.querySelector('[data-attach]');
+      const fileInput = root.querySelector('#image-input');
 
       if (!textarea || !panel || !grid || !toggle || !suggest) return;
 
@@ -226,6 +307,10 @@
           setTab(panel.dataset.activeTab || 'emoji');
         }
       });
+
+      if (attach && fileInput) {
+        attach.addEventListener('click', () => fileInput.click());
+      }
 
       tabs.forEach((tab) => {
         tab.addEventListener('click', () => {

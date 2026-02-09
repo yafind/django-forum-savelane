@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Profile, Section, Subsection, Thread, Post, Conversation, Message
+from .models import Profile, Section, Subsection, Thread, Post, Conversation, Message, WallPost, WallComment
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
@@ -42,3 +42,17 @@ class MessageAdmin(admin.ModelAdmin):
     list_display = ('id', 'conversation', 'sender', 'recipient', 'created_at', 'is_read')
     list_filter = ('is_read', 'created_at')
     search_fields = ('body', 'sender__username', 'recipient__username')
+
+
+@admin.register(WallPost)
+class WallPostAdmin(admin.ModelAdmin):
+    list_display = ('id', 'owner', 'author', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('body', 'author__username', 'owner__username')
+
+
+@admin.register(WallComment)
+class WallCommentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'post', 'author', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('body', 'author__username')

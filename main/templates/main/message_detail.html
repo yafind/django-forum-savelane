@@ -7,11 +7,11 @@
 {% block content %}
 {% emoji_catalog as emoji_catalog %}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap');
-
   .tg-chat {
     font-family: "Manrope", "Segoe UI", sans-serif;
-    background: linear-gradient(135deg, #eaf2ff 0%, #f7f9fc 40%, #e9f7f1 100%);
+    background:
+      radial-gradient(circle at 12% 18%, rgba(0, 122, 204, 0.12), transparent 45%),
+      radial-gradient(circle at 85% 12%, rgba(255, 143, 31, 0.12), transparent 40%);
     min-height: calc(100vh - 64px);
     padding: 20px 0 40px;
   }
@@ -19,10 +19,10 @@
   .tg-chat-shell {
     max-width: 1180px;
     margin: 0 auto;
-    background: #ffffff;
+    background: var(--surface);
     border-radius: 20px;
-    box-shadow: 0 18px 40px rgba(35, 45, 80, 0.12);
-    border: 1px solid rgba(60, 80, 120, 0.08);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--border);
     overflow: hidden;
     display: grid;
     grid-template-columns: minmax(280px, 360px) 1fr;
@@ -30,8 +30,8 @@
   }
 
   .tg-sidebar {
-    background: #f8f9fc;
-    border-right: 1px solid rgba(60, 80, 120, 0.08);
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
     padding: 18px 16px;
     display: flex;
     flex-direction: column;
@@ -42,18 +42,18 @@
     font-size: 1.2rem;
     font-weight: 700;
     margin: 0;
-    color: #1f2a44;
+    color: var(--text);
   }
 
   .tg-search {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #ffffff;
-    border: 1px solid rgba(40, 60, 100, 0.12);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
     padding: 10px 12px;
     border-radius: 12px;
-    box-shadow: inset 0 1px 2px rgba(20, 30, 50, 0.05);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   .tg-search input {
@@ -62,6 +62,7 @@
     width: 100%;
     font-size: 0.95rem;
     background: transparent;
+    color: var(--text);
   }
 
   .tg-list {
@@ -77,39 +78,39 @@
     gap: 12px;
     padding: 10px 12px;
     border-radius: 14px;
-    border: 1px solid rgba(60, 80, 120, 0.08);
-    background: #ffffff;
+    border: 1px solid var(--border);
+    background: var(--surface);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
   .tg-item:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 18px rgba(40, 60, 100, 0.12);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.35);
   }
 
   .tg-item.is-active {
-    border-color: rgba(43, 110, 246, 0.45);
-    box-shadow: 0 12px 20px rgba(43, 110, 246, 0.15);
-    background: linear-gradient(135deg, rgba(43, 110, 246, 0.08), rgba(79, 140, 255, 0.05));
+    border-color: rgba(0, 122, 204, 0.55);
+    box-shadow: 0 12px 20px rgba(0, 122, 204, 0.25);
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.18), rgba(31, 143, 255, 0.08));
   }
 
   .tg-item-name {
     font-weight: 700;
-    color: #1f2a44;
+    color: var(--text);
   }
 
   .tg-item-meta {
     font-size: 0.78rem;
-    color: #7a879b;
+    color: var(--muted);
   }
 
   .tg-item-text {
     font-size: 0.88rem;
-    color: #4f5d75;
+    color: var(--muted);
   }
 
   .tg-badge {
-    background: #2b6ef6;
+    background: var(--accent);
     color: #ffffff;
     font-size: 0.75rem;
     min-width: 22px;
@@ -131,8 +132,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    background: #ffffff;
-    border-bottom: 1px solid rgba(60, 80, 120, 0.08);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
   }
 
   .tg-chat-title {
@@ -145,14 +146,14 @@
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0;
-    color: #1f2a44;
+    color: var(--text);
   }
 
   .tg-chat-body {
     padding: 22px 20px;
     background-image:
-      radial-gradient(circle at 10% 20%, rgba(44, 110, 246, 0.08), transparent 45%),
-      radial-gradient(circle at 90% 10%, rgba(46, 196, 182, 0.1), transparent 40%);
+      radial-gradient(circle at 10% 20%, rgba(0, 122, 204, 0.12), transparent 45%),
+      radial-gradient(circle at 90% 10%, rgba(255, 143, 31, 0.1), transparent 40%);
     flex: 1;
     overflow-y: auto;
   }
@@ -170,20 +171,20 @@
     max-width: 70%;
     padding: 12px 14px;
     border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(20, 30, 60, 0.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     position: relative;
   }
 
   .tg-bubble.is-me {
-    background: linear-gradient(135deg, #2b6ef6, #4f8cff);
+    background: linear-gradient(135deg, #007acc, #1f8fff);
     color: #ffffff;
     border-top-right-radius: 6px;
   }
 
   .tg-bubble.is-them {
-    background: #ffffff;
-    border: 1px solid rgba(60, 80, 120, 0.12);
-    color: #1f2a44;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
     border-top-left-radius: 6px;
   }
 
@@ -194,18 +195,18 @@
   }
 
   .tg-meta.is-them {
-    color: #7a879b;
+    color: var(--muted);
   }
 
   .tg-typing {
     font-size: 0.8rem;
-    color: #5a6b84;
+    color: var(--muted);
   }
 
   .tg-composer {
     padding: 16px 20px 20px;
-    border-top: 1px solid rgba(60, 80, 120, 0.08);
-    background: #f8f9fc;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
   }
 
   .tg-input {
@@ -216,18 +217,29 @@
 
   .tg-input textarea {
     resize: none;
-    border-radius: 14px;
-    border: 1px solid rgba(60, 80, 120, 0.15);
+    border-radius: 16px;
+    border: 1px solid var(--border);
     padding: 12px 14px;
+    background: var(--surface-3);
+    color: var(--text);
   }
 
   .tg-send {
-    background: #2b6ef6;
+    background: var(--accent);
     color: #ffffff;
     border: none;
-    border-radius: 12px;
-    padding: 10px 18px;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 600;
+    box-shadow: 0 10px 20px rgba(0, 122, 204, 0.35);
+  }
+
+  .tg-send:hover {
+    background: var(--accent-strong);
   }
 
   @media (max-width: 992px) {
@@ -337,9 +349,6 @@
       <div class="tg-composer">
         <form method="post" aria-label="Форма личного сообщения">
           {% csrf_token %}
-          <div class="emoji-toolbar">
-            <button type="button" class="emoji-toggle" data-emoji-toggle aria-label="Открыть эмодзи">😊</button>
-          </div>
           <div class="emoji-panel" data-emoji-panel hidden>
             <div class="emoji-tabs">
               <button type="button" class="emoji-tab is-active" data-emoji-tab="emoji">Emoji</button>
@@ -348,9 +357,18 @@
             <div class="emoji-grid" data-emoji-grid></div>
           </div>
           <div class="tg-input emoji-wrapper">
-            <div class="emoji-suggest" data-emoji-suggest></div>
-            <textarea name="body" class="form-control" rows="2" placeholder="Напишите сообщение..." required></textarea>
-            <button type="submit" class="tg-send">Отправить</button>
+            <div class="tg-input-field">
+              <div class="emoji-suggest" data-emoji-suggest></div>
+              <textarea name="body" class="form-control" rows="2" placeholder="Напишите сообщение..." required></textarea>
+              <div class="tg-input-tools">
+                <button type="button" class="tg-icon-btn" data-emoji-toggle aria-label="Открыть эмодзи">
+                  <i class="far fa-smile" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="tg-send" aria-label="Отправить">
+              <i class="fas fa-paper-plane" aria-hidden="true"></i>
+            </button>
           </div>
         </form>
       </div>

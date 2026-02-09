@@ -2,7 +2,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
-from .models import Profile
+from .models import Profile, WallPost, WallComment
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 import bleach
@@ -162,3 +162,45 @@ class AvatarForm(forms.ModelForm):
                 raise ValidationError(f"Допустимые форматы: {', '.join(allowed_extensions)}")
         
         return avatar
+
+
+class WallPostForm(forms.ModelForm):
+    """Форма для записи на стене."""
+    class Meta:
+        model = WallPost
+        fields = ['body']
+        widgets = {
+            'body': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Напишите что-нибудь...'
+            })
+        }
+
+    def clean_body(self):
+        body = (self.cleaned_data.get('body') or '').strip()
+        body = bleach.clean(body, tags=[], strip=True)
+        if not body:
+            raise ValidationError("Текст не может быть пустым.")
+        return body
+
+
+class WallCommentForm(forms.ModelForm):
+    """Форма для комментария на стене."""
+    class Meta:
+        model = WallComment
+        fields = ['body']
+        widgets = {
+            'body': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Оставьте комментарий...'
+            })
+        }
+
+    def clean_body(self):
+        body = (self.cleaned_data.get('body') or '').strip()
+        body = bleach.clean(body, tags=[], strip=True)
+        if not body:
+            raise ValidationError("Комментарий не может быть пустым.")
+        return body

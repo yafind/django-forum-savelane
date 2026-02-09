@@ -10,14 +10,13 @@
     <aside>
       <div class="card h-100 shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Разделы</h5>
-          <small class="text-muted">Навигация</small>
+          <h5 class="mb-0">Разделы форума</h5>
         </div>
         <div class="card-body p-2">
           <nav class="list-group list-group-flush overflow-auto" style="max-height:420px;" aria-label="Forum sections">
           {% comment %}View should prefetch `subsections` to avoid N+1 queries: `.prefetch_related('subsections')`{% endcomment %}
           {% for section in sections %}
-            <div class="list-group-item bg-light fw-semibold text-dark">
+            <div class="list-group-item bg-light fw-semibold text-white">
               <span class="section-title">{{ section.title|emoji_codes }}</span>
             </div>
             <ul class="list-group list-group-flush" aria-label="{{ section.title }} subsections">
@@ -30,11 +29,43 @@
                   </a>
                 </li>
               {% empty %}
-                <li class="list-group-item py-2 text-muted">Нет подразделов</li>
+                <li class="list-group-item py-2 text-muted">Подразделов пока нет</li>
               {% endfor %}
             </ul>
           {% endfor %}
           </nav>
+        </div>
+      </div>
+
+      <!-- Статистика -->
+      <div class="card">
+        <div class="card-header bg-light">
+          <h2 class="h5 mb-0">Статистика форума</h2>
+        </div>
+        <div class="card-body">
+          <div class="row text-center g-3">
+            <div class="col">
+              <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                <i class="fas fa-users text-primary fs-4" aria-hidden="true"></i>
+              </div>
+              <h4 class="mb-0 text-white">{{ stats.users }}</h4>
+              <small class="text-muted">Участников</small>
+            </div>
+            <div class="col">
+              <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                <i class="fas fa-comment-alt text-success fs-4" aria-hidden="true"></i>
+              </div>
+              <h4 class="mb-0 text-white">{{ stats.threads }}</h4>
+              <small class="text-muted">Тем создано</small>
+            </div>
+            <div class="col">
+              <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
+                <i class="fas fa-envelope-open-text text-info fs-4" aria-hidden="true"></i>
+              </div>
+              <h4 class="mb-0 text-white">{{ stats.posts }}</h4>
+              <small class="text-muted">Сообщений всего</small>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
@@ -47,7 +78,7 @@
         <div class="card-header bg-warning bg-opacity-10 border-warning border-start d-flex align-items-center">
           <h2 class="h5 mb-0 text-dark me-2">
             <i class="fas fa-thumbtack me-2" aria-hidden="true"></i>
-            <span>Закреплённые темы</span>
+            <span>Важные темы</span>
           </h2>
         </div>
         <div class="list-group list-group-flush">
@@ -71,7 +102,7 @@
               </div>
             </a>
           {% empty %}
-            <div class="list-group-item py-3 text-muted">Нет закреплённых тем</div>
+            <div class="list-group-item py-3 text-muted">Закреплённых тем пока нет</div>
           {% endfor %}
         </div>
       </div>
@@ -80,11 +111,10 @@
     <!-- Последние темы -->
     <div class="card mb-5 shadow-sm">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">Последние темы</h2>
+        <h2 class="h5 mb-0">Свежие темы</h2>
         <div class="d-flex align-items-center gap-2">
-          <small class="text-muted">Актуальные обсуждения</small>
-          <a href="{% url 'choose_subsection' %}" class="btn btn-sm btn-primary d-inline-flex align-items-center" aria-label="Создать тему">
-            <i class="fas fa-plus-circle me-1" aria-hidden="true"></i> Создать тему
+          <a href="{% url 'choose_subsection' %}" class="btn btn-sm btn-primary shadow-sm rounded-pill fw-semibold px-3 d-inline-flex align-items-center" aria-label="Создать тему">
+            <i class="fas fa-plus-circle me-1" aria-hidden="true"></i>Создать новую тему
           </a>
         </div>
       </div>
@@ -113,43 +143,12 @@
           {% endfor %}
         {% else %}
           <div class="list-group-item py-4 text-center text-muted">
-            <i class="fas fa-inbox me-2" aria-hidden="true"></i>Нет тем
+            <i class="fas fa-inbox me-2" aria-hidden="true"></i>Пока нет тем
           </div>
         {% endif %}
       </div>
     </div>
 
-    <!-- Статистика -->
-    <div class="card">
-      <div class="card-header bg-light">
-        <h2 class="h5 mb-0">Статистика форума</h2>
-      </div>
-      <div class="card-body">
-        <div class="row text-center g-3">
-          <div class="col">
-              <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-              <i class="fas fa-users text-primary fs-4" aria-hidden="true"></i>
-            </div>
-            <h4 class="mb-0">{{ stats.users }}</h4>
-            <small class="text-muted">Пользователей</small>
-          </div>
-          <div class="col">
-              <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-              <i class="fas fa-comment-alt text-success fs-4" aria-hidden="true"></i>
-            </div>
-            <h4 class="mb-0">{{ stats.threads }}</h4>
-            <small class="text-muted">Тем</small>
-          </div>
-          <div class="col">
-              <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
-              <i class="fas fa-envelope-open-text text-info fs-4" aria-hidden="true"></i>
-            </div>
-            <h4 class="mb-0">{{ stats.posts }}</h4>
-            <small class="text-muted">Сообщений</small>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 {% endblock %}

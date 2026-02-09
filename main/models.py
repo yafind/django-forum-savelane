@@ -207,6 +207,68 @@ class Post(models.Model):
         return f'Post by {self.author.username} in {self.thread.title}'
 
 
+class WallPost(models.Model):
+    """Запись на стене пользователя."""
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='wall_posts',
+        verbose_name="Владелец стены"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='authored_wall_posts',
+        verbose_name="Автор"
+    )
+    body = models.TextField(verbose_name="Текст")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Запись стены'
+        verbose_name_plural = 'Записи стены'
+        indexes = [
+            models.Index(fields=['owner', '-created_at']),
+            models.Index(fields=['author']),
+        ]
+
+    def __str__(self):
+        return f'Wall post by {self.author.username} on {self.owner.username}'
+
+
+class WallComment(models.Model):
+    """Комментарий к записи стены."""
+    post = models.ForeignKey(
+        WallPost,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name="Запись"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='wall_comments',
+        verbose_name="Автор"
+    )
+    body = models.TextField(verbose_name="Текст")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Дата обновления")
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Комментарий стены'
+        verbose_name_plural = 'Комментарии стены'
+        indexes = [
+            models.Index(fields=['post', 'created_at']),
+            models.Index(fields=['author']),
+        ]
+
+    def __str__(self):
+        return f'Wall comment by {self.author.username}'
+
+
 class Conversation(models.Model):
     """Диалог 1-на-1 между пользователями."""
     participants = models.ManyToManyField(

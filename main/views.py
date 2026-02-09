@@ -12,9 +12,9 @@ from django.views.decorators.http import require_http_methods
 from django_ratelimit.decorators import ratelimit
 import logging
 
-from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message, TypingStatus
+from .models import Section, Subsection, Thread, Post, Profile, Conversation, Message, TypingStatus, WallPost, WallComment
 from .emoji import render_emoji_html
-from .forms import ThreadForm, AvatarForm, UserRegisterForm
+from .forms import ThreadForm, AvatarForm, UserRegisterForm, WallPostForm, WallCommentForm
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +59,18 @@ def user_profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
     post_count = user.posts.count()
     thread_count = user.threads.count()
+    wall_posts = WallPost.objects.filter(owner=user)
+    wall_posts = wall_posts.select_related('author', 'owner').prefetch_related('comments__author')
+    recent_posts = Post.objects.filter(author=user)
+    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:10]
     return render(request, 'main/user_profile.html', {
         'profile_user': user,
         'post_count': post_count,
         'thread_count': thread_count,
+        'wall_posts': wall_posts,
+        'recent_posts': recent_posts,
+        'wall_form': WallPostForm() if request.user.is_authenticated else None,
+        'wall_comment_form': WallCommentForm() if request.user.is_authenticated else None,
     })
 
 
@@ -261,11 +269,125 @@ def user_profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
     post_count = user.posts.count()
     thread_count = user.threads.count()
+    wall_posts = WallPost.objects.filter(owner=user)
+    wall_posts = wall_posts.select_related('author', 'owner').prefetch_related('comments__author')
+    recent_posts = Post.objects.filter(author=user)
+    recent_posts = recent_posts.select_related('thread', 'thread__subsection__section').order_by('-created_at')[:10]
     return render(request, 'main/user_profile.html', {
         'profile_user': user,
         'post_count': post_count,
         'thread_count': thread_count,
+        'wall_posts': wall_posts,
+        'recent_posts': recent_posts,
+        'wall_form': WallPostForm() if request.user.is_authenticated else None,
+        'wall_comment_form': WallCommentForm() if request.user.is_authenticated else None,
     })
+
+
+@login_required
+@require_http_methods(['POST'])
+def wall_post_create(request, user_id):
+    owner = get_object_or_404(User, id=user_id)
+    form = WallPostForm(request.POST)
+    if form.is_valid():
+        WallPost.objects.create(owner=owner, author=request.user, body=form.cleaned_data['body'])
+        messages.success(request, 'Запись добавлена.')
+    else:
+        messages.error(request, 'Не удалось добавить запись.')
+    return redirect('user_profile', user_id=owner.id)
+
+
+@login_required
+@require_http_methods(['POST'])
+def wall_comment_create(request, user_id, post_id):
+    owner = get_object_or_404(User, id=user_id)
+    post = get_object_or_404(WallPost, id=post_id, owner=owner)
+    form = WallCommentForm(request.POST)
+    if form.is_valid():
+        WallComment.objects.create(post=post, author=request.user, body=form.cleaned_data['body'])
+        messages.success(request, 'Комментарий добавлен.')
+    else:
+        messages.error(request, 'Не удалось добавить комментарий.')
+    return redirect('user_profile', user_id=owner.id)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def wall_post_edit(request, user_id, post_id):
+    owner = get_object_or_404(User, id=user_id)
+    post = get_object_or_404(WallPost, id=post_id, owner=owner)
+    if request.user != post.author and not request.user.is_staff:
+        messages.error(request, 'Вы не можете редактировать эту запись.')
+        return redirect('user_profile', user_id=owner.id)
+
+    if request.method == 'POST':
+        form = WallPostForm(request.POST, instance=post)
+        if form.is_valid():
+            form.save(update_fields=['body', 'updated_at'])
+            messages.success(request, 'Запись обновлена.')
+            return redirect('user_profile', user_id=owner.id)
+    else:
+        form = WallPostForm(instance=post)
+
+    return render(request, 'main/wall_post_edit.html', {
+        'profile_user': owner,
+        'post': post,
+        'form': form,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def wall_post_delete(request, user_id, post_id):
+    owner = get_object_or_404(User, id=user_id)
+    post = get_object_or_404(WallPost, id=post_id, owner=owner)
+    if request.user != post.author and not request.user.is_staff:
+        messages.error(request, 'Вы не можете удалить эту запись.')
+        return redirect('user_profile', user_id=owner.id)
+    post.delete()
+    messages.success(request, 'Запись удалена.')
+    return redirect('user_profile', user_id=owner.id)
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def wall_comment_edit(request, user_id, post_id, comment_id):
+    owner = get_object_or_404(User, id=user_id)
+    post = get_object_or_404(WallPost, id=post_id, owner=owner)
+    comment = get_object_or_404(WallComment, id=comment_id, post=post)
+    if request.user != comment.author and not request.user.is_staff:
+        messages.error(request, 'Вы не можете редактировать этот комментарий.')
+        return redirect('user_profile', user_id=owner.id)
+
+    if request.method == 'POST':
+        form = WallCommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save(update_fields=['body', 'updated_at'])
+            messages.success(request, 'Комментарий обновлён.')
+            return redirect('user_profile', user_id=owner.id)
+    else:
+        form = WallCommentForm(instance=comment)
+
+    return render(request, 'main/wall_comment_edit.html', {
+        'profile_user': owner,
+        'post': post,
+        'comment': comment,
+        'form': form,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def wall_comment_delete(request, user_id, post_id, comment_id):
+    owner = get_object_or_404(User, id=user_id)
+    post = get_object_or_404(WallPost, id=post_id, owner=owner)
+    comment = get_object_or_404(WallComment, id=comment_id, post=post)
+    if request.user != comment.author and not request.user.is_staff:
+        messages.error(request, 'Вы не можете удалить этот комментарий.')
+        return redirect('user_profile', user_id=owner.id)
+    comment.delete()
+    messages.success(request, 'Комментарий удалён.')
+    return redirect('user_profile', user_id=owner.id)
 
 
 # ==============================================================================
