@@ -58,7 +58,7 @@
     background: var(--surface-3);
     color: var(--text);
     border: 1px solid var(--border);
-    padding-right: 120px;
+    padding-right: 86px;
   }
 
   .tg-send-btn {
@@ -135,8 +135,8 @@
 
     <!-- Изображение -->
     {% if post.image %}
-        <div class="mb-3">
-          <input type="file" name="image" class="form-control visually-hidden" accept="image/*" id="image-input">
+      <div class="mt-2">
+        <img 
           src="{{ post.image.url }}" 
           alt="Изображение к посту"
           class="img-fluid rounded border"
@@ -217,9 +217,6 @@
               required
               ></textarea>
               <div class="tg-input-tools">
-                <button type="button" class="tg-icon-btn" data-attach aria-label="Прикрепить фото">
-                  <i class="fas fa-paperclip" aria-hidden="true"></i>
-                </button>
                 <button type="button" class="tg-icon-btn" data-emoji-toggle aria-label="Открыть эмодзи">
                   <i class="far fa-smile" aria-hidden="true"></i>
                 </button>
@@ -229,14 +226,6 @@
           <button type="submit" class="tg-send-btn" aria-label="Отправить сообщение">
             <i class="fas fa-paper-plane" aria-hidden="true"></i>
           </button>
-        </div>
-        <div class="mb-3">
-          <label for="image-input" class="form-label">Изображение (необязательно)</label>
-          <input type="file" name="image" class="form-control" accept="image/*" id="image-input">
-          <div class="form-text text-muted">Поддерживаются JPG, PNG, до 5 МБ</div>
-          <div id="image-preview" class="mt-2" style="display: none;">
-            <img id="preview-img" class="img-thumbnail rounded" style="max-height: 200px; object-fit: contain; border: 1px solid var(--border);">
-          </div>
         </div>
       </form>
     </div>
@@ -265,9 +254,6 @@
       const toggle = root.querySelector('[data-emoji-toggle]');
       const suggest = root.querySelector('[data-emoji-suggest]');
       const tabs = root.querySelectorAll('[data-emoji-tab]');
-      const attach = root.querySelector('[data-attach]');
-      const fileInput = root.querySelector('#image-input');
-
       if (!textarea || !panel || !grid || !toggle || !suggest) return;
 
       function renderGrid(mode) {
@@ -307,10 +293,6 @@
           setTab(panel.dataset.activeTab || 'emoji');
         }
       });
-
-      if (attach && fileInput) {
-        attach.addEventListener('click', () => fileInput.click());
-      }
 
       tabs.forEach((tab) => {
         tab.addEventListener('click', () => {
@@ -352,21 +334,6 @@
       });
     }
 
-    document.getElementById('image-input').addEventListener('change', function(e) {
-      const preview = document.getElementById('image-preview');
-      const img = document.getElementById('preview-img');
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          img.src = event.target.result;
-          preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-      } else {
-        preview.style.display = 'none';
-      }
-    });
 
     setupEmojiPicker(document.getElementById('post-form'));
   </script>
