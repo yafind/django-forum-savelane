@@ -148,7 +148,8 @@
   </div>
 
   <!-- Действия (редактирование для автора, удаление для админа) -->
-  {% if user.is_authenticated and (post.author == user or user.is_staff) %}
+  {% if user.is_authenticated %}
+    {% if post.author == user or user.is_staff %}
     <div class="card-footer bg-light border-top-0 p-3">
       <div class="d-flex gap-2">
         {% if post.author == user %}
@@ -164,6 +165,7 @@
         {% endif %}
       </div>
     </div>
+    {% endif %}
   {% endif %}
 </div>
 {% endfor %}
