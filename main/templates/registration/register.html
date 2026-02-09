@@ -39,6 +39,24 @@
               <div class="text-danger mt-1">{{ form.password2.errors }}</div>
             {% endif %}
           </div>
+          <div class="form-check mb-2">
+            {{ form.agree_terms }}
+            <label class="form-check-label" for="{{ form.agree_terms.id_for_label }}">
+              Я принимаю <a href="{% url 'user_agreement' %}">Пользовательское соглашение</a>
+            </label>
+            {% if form.agree_terms.errors %}
+              <div class="text-danger mt-1">{{ form.agree_terms.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="form-check mb-3">
+            {{ form.agree_privacy }}
+            <label class="form-check-label" for="{{ form.agree_privacy.id_for_label }}">
+              Я принимаю <a href="{% url 'privacy_policy' %}">Политику конфиденциальности</a>
+            </label>
+            {% if form.agree_privacy.errors %}
+              <div class="text-danger mt-1">{{ form.agree_privacy.errors }}</div>
+            {% endif %}
+          </div>
           <button type="submit" class="btn btn-success w-100">
             <i class="fas fa-user-check me-2" aria-hidden="true"></i>Создать аккаунт
           </button>

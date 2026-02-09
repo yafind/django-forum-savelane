@@ -15,10 +15,18 @@ class UserRegisterForm(UserCreationForm):
         label="Электронная почта",
         help_text="Введите корректный адрес email"
     )
+    agree_terms = forms.BooleanField(
+        required=True,
+        label="Я принимаю Пользовательское соглашение"
+    )
+    agree_privacy = forms.BooleanField(
+        required=True,
+        label="Я принимаю Политику конфиденциальности"
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'email', 'password1', 'password2', 'agree_terms', 'agree_privacy']
 
     def clean_username(self):
         """Валидация имени пользователя."""

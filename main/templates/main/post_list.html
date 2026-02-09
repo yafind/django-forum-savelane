@@ -147,12 +147,22 @@
     {% endif %}
   </div>
 
-  <!-- Редактирование (только свой пост) -->
-  {% if user.is_authenticated and post.author == user %}
+  <!-- Действия (редактирование для автора, удаление для админа) -->
+  {% if user.is_authenticated and (post.author == user or user.is_staff) %}
     <div class="card-footer bg-light border-top-0 p-3">
-        <a href="{% url 'edit_post' post.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-        <i class="fas fa-edit me-1" aria-hidden="true"></i> Редактировать
-      </a>
+      <div class="d-flex gap-2">
+        {% if post.author == user %}
+          <a href="{% url 'edit_post' post.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="fas fa-edit me-1" aria-hidden="true"></i> Редактировать
+          </a>
+        {% endif %}
+        {% if user.is_staff %}
+          <form method="post" action="{% url 'delete_post' post.id %}" onsubmit="return confirm('Удалить сообщение? Действие нельзя отменить.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Удалить</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
   {% endif %}
 </div>

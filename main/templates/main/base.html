@@ -356,6 +356,7 @@
 
         <!-- Меню профиля или кнопка входа -->
         <div class="d-flex align-items-center">
+            <a class="btn btn-sm btn-outline-primary me-2" href="{% url 'rules' %}">Правила</a>
             {% if user.is_authenticated %}
                 <a class="btn btn-sm btn-outline-primary position-relative me-2" href="{% url 'messages_list' %}">
                     <i class="fas fa-envelope me-1" aria-hidden="true"></i> Личные

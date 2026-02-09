@@ -227,6 +227,18 @@ def choose_subsection(request):
     return render(request, 'main/choose_subsection.html', {'sections': sections})
 
 
+def rules(request):
+    return render(request, 'main/rules.html')
+
+
+def user_agreement(request):
+    return render(request, 'main/user_agreement.html')
+
+
+def privacy_policy(request):
+    return render(request, 'main/privacy_policy.html')
+
+
 # ==============================================================================
 # АВАТАРКИ — управление изображением профиля пользователя
 
@@ -582,6 +594,27 @@ def edit_post(request, post_id):
             return redirect('post_list', thread_id=post.thread.id)
     
     return render(request, 'main/edit_post.html', {'post': post})
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def delete_thread(request, thread_id):
+    thread = get_object_or_404(Thread, id=thread_id)
+    subsection_id = thread.subsection_id
+    title = thread.title
+    thread.delete()
+    messages.success(request, f'Тема «{title}» удалена.')
+    return redirect('thread_list', subsection_id=subsection_id)
+
+
+@staff_member_required
+@require_http_methods(['POST'])
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    thread_id = post.thread_id
+    post.delete()
+    messages.success(request, 'Сообщение удалено.')
+    return redirect('post_list', thread_id=thread_id)
 
 
 # ==============================================================================
